@@ -4,6 +4,10 @@ import ui
 # todo: 9 x 9 の盤面
 MTRX = 9
 
+# xxx: 良きように振り分け
+row_num = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
+clm_num = []
+
 
 class Cell(ui.View):
   def __init__(self, *args, **kwargs):
@@ -68,7 +72,6 @@ class StageMatrix(ui.View):
     counter = 0
     len_cells = sum(len(l) for l in self.cells)
     cell_size = parent_size / MTRX
-
     for x, cells in enumerate(self.cells):
       for y, cell in enumerate(cells):
         h = counter / len_cells
@@ -89,7 +92,7 @@ class StageMatrix(ui.View):
     self.set_dot()
 
   def set_dot(self):
-    size = self.width / 24
+    size = self.width / 64
     pos = self.width / 3
     x_pos = pos
     y_pos = pos
@@ -98,7 +101,6 @@ class StageMatrix(ui.View):
         dot.width = size
         dot.height = size
         dot.corner_radius = size
-
         dot.x = x_pos - (dot.width / 2)
         dot.y = y_pos - (dot.height / 2)
         x_pos += x_pos
@@ -112,17 +114,37 @@ class Board(ui.View):
     self.bg_color = 'magenta'
     self.stage = StageMatrix()
     self.add_subview(self.stage)
-    '''
+
     self.rows = [Cell() for r in range(MTRX)]
     self.clms = [Cell() for c in range(MTRX)]
     [self.add_subview(r) for r in self.rows]
     [self.add_subview(c) for c in self.clms]
-    '''
 
   def set_layout(self, parent_size):
     self.width = parent_size
     self.height = parent_size
-    self.stage.set_matrix(parent_size)
+    min_size = parent_size / 24
+    max_size = (parent_size - min_size) / MTRX
+    x_pos = 0
+    y_pos = min_size
+    for n, row in enumerate(self.rows):
+      # xxx: index の呼び方検討
+      #print(self.rows.index(row))
+      row.width = max_size
+      row.height = min_size
+      row.text = str(row_num[n])
+      row.x = x_pos
+      x_pos += max_size
+    for n, clm in enumerate(self.clms):
+      clm.width = min_size
+      clm.height = max_size
+      clm.text = str(row_num[n])
+      clm.x = x_pos
+      clm.y = y_pos
+      y_pos += max_size
+
+    self.stage.set_matrix(parent_size - min_size)
+    self.stage.y = min_size
 
 
 class MainView(ui.View):
@@ -140,4 +162,5 @@ class MainView(ui.View):
 if __name__ == '__main__':
   view = MainView()
   view.present(style='fullscreen', orientations=['portrait'])
+  #view.present()
 
