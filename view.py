@@ -36,16 +36,16 @@ class Dot(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 0
-    self.corner_radius = 32
-    self.width = 32
-    self.height = 32
+    #self.corner_radius = 32
+    #self.width = 32
+    #self.height = 32
+
   '''
   def draw(self):
     ui.set_color(0)
     dot = ui.Path.oval(0, 0, self.width, self.height)
     dot.fill()
   '''
-
 
 
 class StageMatrix(ui.View):
@@ -66,7 +66,6 @@ class StageMatrix(ui.View):
     x_pos = 0
     y_pos = 0
     counter = 0
-    #len_cells = len(self.subviews)
     len_cells = sum(len(l) for l in self.cells)
     cell_size = parent_size / MTRX
 
@@ -90,11 +89,16 @@ class StageMatrix(ui.View):
     self.set_dot()
 
   def set_dot(self):
+    size = self.width / 24
     pos = self.width / 3
     x_pos = pos
     y_pos = pos
     for dots in self.dots:
       for dot in dots:
+        dot.width = size
+        dot.height = size
+        dot.corner_radius = size
+
         dot.x = x_pos - (dot.width / 2)
         dot.y = y_pos - (dot.height / 2)
         x_pos += x_pos
@@ -136,3 +140,4 @@ class MainView(ui.View):
 if __name__ == '__main__':
   view = MainView()
   view.present(style='fullscreen', orientations=['portrait'])
+
