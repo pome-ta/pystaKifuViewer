@@ -35,15 +35,19 @@ class Cell(ui.View):
 class Dot(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    #self.bg_color = 0
-
+    self.bg_color = 0
+    self.corner_radius = 32
+    self.width = 32
+    self.height = 32
+  '''
   def draw(self):
-    ui.set_color(0.23)
+    ui.set_color(0)
     dot = ui.Path.oval(0, 0, self.width, self.height)
     dot.fill()
+  '''
 
 
-#/private/var/mobile/Containers/Shared/AppGroup/1A172B60-A102-4FCE-AAD6-476A5A32385E/Pythonista3/Documents/ws/graphics/game/shogi/211018_1325.py
+
 class StageMatrix(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
@@ -54,7 +58,6 @@ class StageMatrix(ui.View):
     [[self.add_subview(y) for y in x] for x in self.cells]
 
     self.dots = [[Dot() for dy in range(2)] for dx in range(2)]
-    print(self.dots)
     [[self.add_subview(dy) for dy in dx] for dx in self.dots]
 
   def set_matrix(self, parent_size):
@@ -87,14 +90,15 @@ class StageMatrix(ui.View):
     self.set_dot()
 
   def set_dot(self):
-    x_pos = self.width / 3
-    y_pos = self.height / 3
+    pos = self.width / 3
+    x_pos = pos
+    y_pos = pos
     for dots in self.dots:
       for dot in dots:
-        dot.x = x_pos
-        dot.y = y_pos
+        dot.x = x_pos - (dot.width / 2)
+        dot.y = y_pos - (dot.height / 2)
         x_pos += x_pos
-      x_pos = 0
+      x_pos = pos
       y_pos += y_pos
 
 
@@ -132,4 +136,3 @@ class MainView(ui.View):
 if __name__ == '__main__':
   view = MainView()
   view.present(style='fullscreen', orientations=['portrait'])
-
