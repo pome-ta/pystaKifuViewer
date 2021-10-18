@@ -32,22 +32,39 @@ class Cell(ui.View):
     self._text = self.label.text
 
 
+class Dot(ui.View):
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    #self.bg_color = 0
+
+  def draw(self):
+    ui.set_color(0.23)
+    dot = ui.Path.oval(0, 0, self.width, self.height)
+    dot.fill()
+
+
+#/private/var/mobile/Containers/Shared/AppGroup/1A172B60-A102-4FCE-AAD6-476A5A32385E/Pythonista3/Documents/ws/graphics/game/shogi/211018_1325.py
 class StageMatrix(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 'yellow'
 
-    self.cells = [[Cell() for y in range(MTRX)] for x in range(MTRX)]
+    self.cells = [[(Cell()) for y in range(MTRX)] for x in range(MTRX)]
 
     [[self.add_subview(y) for y in x] for x in self.cells]
 
-  def set_layout(self, parent_size):
+    self.dots = [[Dot() for dy in range(2)] for dx in range(2)]
+    print(self.dots)
+    [[self.add_subview(dy) for dy in dx] for dx in self.dots]
+
+  def set_matrix(self, parent_size):
     self.width = parent_size
     self.height = parent_size
     x_pos = 0
     y_pos = 0
     counter = 0
-    len_cells = len(self.subviews)
+    #len_cells = len(self.subviews)
+    len_cells = sum(len(l) for l in self.cells)
     cell_size = parent_size / MTRX
 
     for x, cells in enumerate(self.cells):
@@ -61,11 +78,24 @@ class StageMatrix(ui.View):
         cell.height = cell_size
         cell.x = x_pos
         cell.y = y_pos
+        # xxx: 配列明記不要になったら`enumerate` を消す
         cell.text = f'{x}, {y}'
         counter += 1
         x_pos += cell_size
       x_pos = 0
       y_pos += cell_size
+    self.set_dot()
+
+  def set_dot(self):
+    x_pos = self.width / 3
+    y_pos = self.height / 3
+    for dots in self.dots:
+      for dot in dots:
+        dot.x = x_pos
+        dot.y = y_pos
+        x_pos += x_pos
+      x_pos = 0
+      y_pos += y_pos
 
 
 class Board(ui.View):
@@ -74,13 +104,17 @@ class Board(ui.View):
     self.bg_color = 'magenta'
     self.stage = StageMatrix()
     self.add_subview(self.stage)
-    #[self.add_subview(r) for r in self.rows]
-    #[self.add_subview(c) for c in self.clms]
+    '''
+    self.rows = [Cell() for r in range(MTRX)]
+    self.clms = [Cell() for c in range(MTRX)]
+    [self.add_subview(r) for r in self.rows]
+    [self.add_subview(c) for c in self.clms]
+    '''
 
   def set_layout(self, parent_size):
     self.width = parent_size
     self.height = parent_size
-    self.stage.set_layout(parent_size)
+    self.stage.set_matrix(parent_size)
 
 
 class MainView(ui.View):
