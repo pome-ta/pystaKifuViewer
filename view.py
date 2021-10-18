@@ -14,8 +14,8 @@ class Cell(ui.View):
     ui.View.__init__(self, *args, **kwargs)
     self._text = ''
     #self.bg_color = 'cyan'
-    self.border_color = 0
-    self.border_width = 0.5
+    #self.border_color = 0
+    #self.border_width = 0.5
 
     self.label = ui.Label()
     self.label.alignment = ui.ALIGN_CENTER
@@ -87,7 +87,7 @@ class StageMatrix(ui.View):
         h = counter / len_cells
         color = hsv_to_rgb(h, h, 1)
         cell.bg_color = color
-        cell.bg_color = 'gray' if boolen else 'darkgray'
+        cell.bg_color = 'silver' if boolen else 'darkgray'
         #cell.label.bg_color = color
 
         cell.width = cell_size
@@ -103,7 +103,7 @@ class StageMatrix(ui.View):
     self.set_dot()
 
   def set_dot(self):
-    size = self.width / 32
+    size = self.width / 64
     pos = self.width / 3
     x_pos = pos
     y_pos = pos
