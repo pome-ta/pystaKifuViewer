@@ -13,9 +13,9 @@ class Cell(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self._text = ''
-    self.bg_color = 'cyan'
-    self.border_color = 1
-    self.border_width = 1
+    #self.bg_color = 'cyan'
+    self.border_color = 0
+    self.border_width = 0.5
 
     self.label = ui.Label()
     self.label.alignment = ui.ALIGN_CENTER
@@ -55,7 +55,7 @@ class Dot(ui.View):
 class StageMatrix(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    self.bg_color = 'yellow'
+    #self.bg_color = 'yellow'
 
     self.cells = [[(Cell()) for y in range(MTRX)] for x in range(MTRX)]
 
@@ -74,10 +74,21 @@ class StageMatrix(ui.View):
     cell_size = parent_size / MTRX
     for x, cells in enumerate(self.cells):
       for y, cell in enumerate(cells):
+        if x % 2 == 0:
+          if y % 2 == 0:
+            boolen = True
+          else:
+            boolen = False
+        else:
+          if y % 2 == 0:
+            boolen = False
+          else:
+            boolen = True
         h = counter / len_cells
         color = hsv_to_rgb(h, h, 1)
-        #cell.bg_color = color
-        cell.label.bg_color = color
+        cell.bg_color = color
+        cell.bg_color = 'gray' if boolen else 'darkgray'
+        #cell.label.bg_color = color
 
         cell.width = cell_size
         cell.height = cell_size
@@ -92,7 +103,7 @@ class StageMatrix(ui.View):
     self.set_dot()
 
   def set_dot(self):
-    size = self.width / 64
+    size = self.width / 32
     pos = self.width / 3
     x_pos = pos
     y_pos = pos
@@ -111,7 +122,7 @@ class StageMatrix(ui.View):
 class Board(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    self.bg_color = 'magenta'
+    #self.bg_color = 'goldenrod'
     self.stage = StageMatrix()
     self.add_subview(self.stage)
 
@@ -123,7 +134,7 @@ class Board(ui.View):
   def set_layout(self, parent_size):
     self.width = parent_size
     self.height = parent_size
-    min_size = parent_size / 24
+    min_size = parent_size / 16
     max_size = (parent_size - min_size) / MTRX
     x_pos = 0
     y_pos = min_size
