@@ -1,6 +1,9 @@
 from colorsys import hsv_to_rgb
 import ui
 
+# todo: 9 x 9 の盤面
+MTRX = 9
+
 
 class Cell(ui.View):
   def __init__(self, *args, **kwargs):
@@ -29,26 +32,23 @@ class Cell(ui.View):
     self._text = self.label.text
 
 
-class Board(ui.View):
+class StageMatrix(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    self.bg_color = 'magenta'
-    self.mtrx = 9
-    self.cells = [[Cell() for y in range(self.mtrx)] for x in range(self.mtrx)]
+    self.bg_color = 'yellow'
+
+    self.cells = [[Cell() for y in range(MTRX)] for x in range(MTRX)]
 
     [[self.add_subview(y) for y in x] for x in self.cells]
 
-  def layout_stage(self, parent_size):
-
-    size = min(parent_size)
-    self.width = size
-    self.height = size
-
+  def set_layout(self, parent_size):
+    self.width = parent_size
+    self.height = parent_size
     x_pos = 0
     y_pos = 0
     counter = 0
     len_cells = len(self.subviews)
-    cell_size = size / self.mtrx
+    cell_size = parent_size / MTRX
 
     for x, cells in enumerate(self.cells):
       for y, cell in enumerate(cells):
@@ -68,6 +68,21 @@ class Board(ui.View):
       y_pos += cell_size
 
 
+class Board(ui.View):
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.bg_color = 'magenta'
+    self.stage = StageMatrix()
+    self.add_subview(self.stage)
+    #[self.add_subview(r) for r in self.rows]
+    #[self.add_subview(c) for c in self.clms]
+
+  def set_layout(self, parent_size):
+    self.width = parent_size
+    self.height = parent_size
+    self.stage.set_layout(parent_size)
+
+
 class MainView(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
@@ -76,8 +91,8 @@ class MainView(ui.View):
     self.add_subview(self.board)
 
   def layout(self):
-    size = [self.width, self.height]
-    self.board.layout_stage(size)
+    square_size = min(self.width, self.height)
+    self.board.set_layout(square_size)
 
 
 if __name__ == '__main__':
