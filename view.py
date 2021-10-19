@@ -10,6 +10,13 @@ row_num = ['9', '8', '7', '6', '5', '4', '3', '2', '1']
 clm_num = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
 
 
+piece_dic = {}
+
+
+class Piece:
+  def __init__(self):
+    self.order = True
+
 def x_board(n):
   return row_num[n]
 
@@ -46,10 +53,11 @@ class Cell(ui.View):
     # xxx: `color = args` とりあえず
     #print(args)
     color = args[0]
+    self.pos_x.bg_color = self.pos_y.bg_color = color
+    
     pos_size = size / 4
     self.pos_x.width, self.pos_x.height = [pos_size] * 2
     self.pos_y.width, self.pos_y.height = [pos_size] * 2
-    self.pos_x.bg_color = self.pos_y.bg_color = color
     self.pos_y.x = size - self.pos_y.width
     self.pos_y.y = size - self.pos_y.height
     self.pos_x.text = f'{x_board(x)}'
@@ -205,3 +213,4 @@ if __name__ == '__main__':
   view = MainView()
   view.present(style='fullscreen', orientations=['portrait'])
   #view.present()
+
