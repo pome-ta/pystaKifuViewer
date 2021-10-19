@@ -1,3 +1,4 @@
+from enum import Enum
 from colorsys import hsv_to_rgb
 import ui
 
@@ -5,8 +6,16 @@ import ui
 MTRX = 9
 
 # xxx: 良きように振り分け
-row_num = ['1', '2', '3', '4', '5', '6', '7', '8', '9']
-clm_num = []
+row_num = ['9', '8', '7', '6', '5', '4', '3', '2', '1']
+clm_num = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
+
+
+def x_board(n):
+  return row_num[n]
+
+
+def y_board(n):
+  return clm_num[n]
 
 
 class Cell(ui.View):
@@ -57,12 +66,12 @@ class StageMatrix(ui.View):
     ui.View.__init__(self, *args, **kwargs)
     #self.bg_color = 'yellow'
 
-    self.cells = [[(Cell()) for y in range(MTRX)] for x in range(MTRX)]
+    self.cells = [[(Cell()) for x in range(MTRX)] for y in range(MTRX)]
 
-    [[self.add_subview(y) for y in x] for x in self.cells]
+    [[self.add_subview(x) for x in y] for y in self.cells]
 
-    self.dots = [[Dot() for dy in range(2)] for dx in range(2)]
-    [[self.add_subview(dy) for dy in dx] for dx in self.dots]
+    self.dots = [[Dot() for dx in range(2)] for dy in range(2)]
+    [[self.add_subview(dx) for dx in dy] for dy in self.dots]
 
   def set_matrix(self, parent_size):
     self.width = parent_size
@@ -72,8 +81,8 @@ class StageMatrix(ui.View):
     counter = 0
     len_cells = sum(len(l) for l in self.cells)
     cell_size = parent_size / MTRX
-    for x, cells in enumerate(self.cells):
-      for y, cell in enumerate(cells):
+    for y, cells in enumerate(self.cells):
+      for x, cell in enumerate(cells):
         if x % 2 == 0:
           if y % 2 == 0:
             boolen = True
@@ -95,7 +104,7 @@ class StageMatrix(ui.View):
         cell.x = x_pos
         cell.y = y_pos
         # xxx: 配列明記不要になったら`enumerate` を消す
-        cell.text = f'{x}, {y}'
+        cell.text = f'{x_board(x)}, {y_board(y)}'
         counter += 1
         x_pos += cell_size
       x_pos = 0
@@ -149,7 +158,7 @@ class Board(ui.View):
     for n, clm in enumerate(self.clms):
       clm.width = min_size
       clm.height = max_size
-      clm.text = str(row_num[n])
+      clm.text = str(clm_num[n])
       clm.x = x_pos
       clm.y = y_pos
       y_pos += max_size
