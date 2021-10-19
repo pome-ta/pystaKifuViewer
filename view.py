@@ -22,17 +22,38 @@ class Cell(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self._text = ''
-    #self.bg_color = 'cyan'
-    #self.border_color = 0
-    #self.border_width = 0.5
-
     self.label = ui.Label()
     self.label.alignment = ui.ALIGN_CENTER
-    self.label.text = '0, 0'
+    #self.label.text = '0, 0'
     self.label.text_color = 0
-    self.label.font = ('Source Code Pro', 12)
+    self.label.font = ('Source Code Pro', 14)
     self.label.flex = 'WH'
+    #self.label.size_to_fit()
+
+    self.pos_x = ui.Label()
+    self.pos_x.alignment = ui.ALIGN_CENTER
+    self.pos_y = ui.Label()
+    self.pos_y.alignment = ui.ALIGN_CENTER
+    self.pos_x.font = self.pos_y.font = ('Source Code Pro', 8)
+    #self.pos_x.flex = 'WTL'
+    #self.pos_y.flex = 'WBR'
+    self.add_subview(self.pos_x)
+    self.add_subview(self.pos_y)
+
     self.add_subview(self.label)
+
+  def set_label_pos(self, size, x, y, *args):
+    # xxx: `color = args` とりあえず
+    #print(args)
+    color = args[0]
+    pos_size = size / 4
+    self.pos_x.width, self.pos_x.height = [pos_size] * 2
+    self.pos_y.width, self.pos_y.height = [pos_size] * 2
+    self.pos_x.bg_color = self.pos_y.bg_color = color
+    self.pos_y.x = size - self.pos_y.width
+    self.pos_y.y = size - self.pos_y.height
+    self.pos_x.text = f'{x_board(x)}'
+    self.pos_y.text = f'{y_board(y)}'
 
   @property
   def text(self):
@@ -98,6 +119,7 @@ class StageMatrix(ui.View):
         cell.bg_color = color
         cell.bg_color = 'silver' if boolen else 'darkgray'
         #cell.label.bg_color = color
+        cell.set_label_pos(cell_size, x, y, color)
 
         cell.width = cell_size
         cell.height = cell_size
@@ -183,4 +205,3 @@ if __name__ == '__main__':
   view = MainView()
   view.present(style='fullscreen', orientations=['portrait'])
   #view.present()
-
