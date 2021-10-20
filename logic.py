@@ -62,6 +62,11 @@ class GameLogic:
     else:
       be_y = None
       be_x = None
+      piece_pop = piece_name[1:]
+      if '+' in piece_name:
+        self.sente_hand.remove(piece_pop)
+      if '-' in piece_name:
+        self.gote_hand.remove(piece_pop)
     af_y = 9 - int(_after[0])
     af_x = int(_after[1]) - 1
     if self.game_board[af_x][af_y] != '*':
@@ -71,12 +76,14 @@ class GameLogic:
     self.turn_num += 1
 
   def get_piece(self, get):
+    piece = self._convert_piece(get)
     if '+' in get:
-      piece = self._convert_piece(get)
       self.gote_hand.append(piece)
+      self.gote_hand.sort()
+      
     if '-' in get:
-      piece = self._convert_piece(get)
       self.sente_hand.append(piece)
+      self.sente_hand.sort()
         
         
   def _convert_piece(self, piece):
@@ -117,4 +124,3 @@ if __name__ == '__main__':
     game.turn_purser(p)
     game.print_board()
     input()
-
