@@ -5,6 +5,17 @@ kifu_path = Path('./kifu.csa')
 with kifu_path.open(encoding='utf-8') as f:
   kifu_data = f.readlines()
 
+#歩,香,桂,銀,金,角,飛,王(玉)
+#FU,KY,KE,GI,KI,KA,HI,OU
+#と,成,圭,全,馬,竜
+#TO,NY,NK,NG,UM,RY
+
+#FU -> TO
+#KY -> KY
+#KE -> NK
+#GI -> NG
+#KA -> UM
+#HI -> RY
 
 class GameLogic:
   def __init__(self, kifu):
@@ -75,4 +86,3 @@ if __name__ == '__main__':
     game.turn_purser(p)
     game.print_board()
     input()
-
