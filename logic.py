@@ -11,7 +11,7 @@ with kifu_path.open(encoding='utf-8') as f:
 #TO,NY,NK,NG,UM,RY
 
 #FU -> TO
-#KY -> KY
+#KY -> NY
 #KE -> NK
 #GI -> NG
 #KA -> UM
@@ -24,9 +24,12 @@ class GameLogic:
     self.prompt = [i.strip() for i in kifu[17:-1]]
     self.length_turn = len(self.prompt)
     self.game_board = self.init_board()
-
-    self.sen_hand = []
-    self.kou_hand = []
+    
+    # '+'
+    self.sente_hand = []
+    # '-'
+    self.gote_hand = []
+    self.turn_num = 0
 
   def init_board(self):
     setlist = []
@@ -38,11 +41,6 @@ class GameLogic:
     return setlist
 
   def turn_purser(self, turn_data):
-    turn_num = self.prompt.index(turn_data)
-    piece_name = 'None'
-    af_x = 0
-    af_y = 0
-
     if len(turn_data) == 1:
       self.game_board = self.init_board()
       print('開始')
@@ -50,11 +48,13 @@ class GameLogic:
     if '%' in turn_data:
       print('終了')
       return None
+      
     turn = turn_data[0]
     _before = turn_data[1:3]
     _after = turn_data[3:5]
     piece_name = turn + turn_data[5:]
-    print(f'{turn_num: 3d}手目:', _after + piece_name)
+    print(f'{self.turn_num:03d}手目: {_after}{piece_name}')
+    
     if not '00' in _before:
       be_y = 9 - int(_before[0])
       be_x = int(_before[1]) - 1
@@ -64,10 +64,41 @@ class GameLogic:
       be_x = None
     af_y = 9 - int(_after[0])
     af_x = int(_after[1]) - 1
+    if self.game_board[af_x][af_y] != '*':
+      piece_get = self.game_board[af_x][af_y]
+      self.get_piece(piece_get)
     self.game_board[af_x][af_y] = piece_name
+    self.turn_num += 1
 
+  def get_piece(self, get):
+    if '+' in get:
+      piece = self._convert_piece(get)
+      self.gote_hand.append(piece)
+    if '-' in get:
+      piece = self._convert_piece(get)
+      self.sente_hand.append(piece)
+        
+        
+  def _convert_piece(self, piece):
+    if 'TO' in piece:
+      piece = 'FU'
+    elif 'NY' in piece:
+      piece = 'KY'
+    elif 'NK' in piece:
+      piece = 'KE'
+    elif 'NG' in piece:
+      piece = 'GI'
+    elif 'UM' in piece:
+      piece = 'KA'
+    elif 'RY' in piece:
+      piece = 'HI'
+    else:
+      piece = piece[1:]
+    return piece
+        
+  
   def print_board(self):
-    print(f'後攻手駒: {self.kou_hand}')
+    print(f'後手手駒: {self.gote_hand}')
     print('+---------------------------+')
     for board in self.game_board:
       line = ' '
@@ -77,7 +108,7 @@ class GameLogic:
         line += piece
       print(line)
     print('+---------------------------+')
-    print(f'先攻手駒: {self.sen_hand}')
+    print(f'先手手駒: {self.sente_hand}')
 
 
 if __name__ == '__main__':
@@ -86,3 +117,4 @@ if __name__ == '__main__':
     game.turn_purser(p)
     game.print_board()
     input()
+
