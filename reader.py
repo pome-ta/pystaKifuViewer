@@ -13,9 +13,9 @@ def load_kifu():
 class KifuReader:
     def __init__(self, data):
         _header = data[:8]
-        board_init = data[8:17]
+        self.board_init = data[8:17]
         self.prompt = [i.strip() for i in data[17:-1]]
-        self.game_board = self.init_board(board_init)
+        self.game_board = self.init_board(self.board_init)
 
     @staticmethod
     def init_board(board):
@@ -27,10 +27,22 @@ class KifuReader:
             setup_board.append(one_line[1:])
         return setup_board
 
+    def looper(self, turn):
+        if len(turn) == 1:
+            self.game_board = self.init_board(self.board_init)
+
+        if '%' in turn:
+            return
+        sg = turn[0]
+        before = turn[1:3]
+        after = turn[3:5]
+        piece_name = sg + turn[5:]
+        a = 1
+
 
 if __name__ == '__main__':
-    from pprint import pprint
-
     kifu_data = load_kifu()
     kifu = KifuReader(kifu_data)
-    pprint(kifu.prompt)
+    for p in range(len(kifu.prompt)):
+        pass
+
