@@ -44,24 +44,25 @@ class GameLogic:
   def looper(self, n):
     for p in self.prompt[:n]:
       self.turn_purser(p)
-      self.print_board()
+    print(f'{self.turn_num:03d}手目: {self._after}{self.piece_name}')
+    self.print_board()
   
   def turn_purser(self, turn_data):
     if len(turn_data) == 1:
       self.game_board = self.init_board()
-      print('開始')
+      #print('開始')
       return None
 
     if '%' in turn_data:
       self.turn_num += 1
-      print(f'全{self.turn_num:03d}手 {turn_data}: 終了')
+      #print(f'全{self.turn_num:03d}手 {turn_data}: 終了')
       return None
 
     turn = turn_data[0]
     _before = turn_data[1:3]
-    _after = turn_data[3:5]
-    piece_name = turn + turn_data[5:]
-    print(f'{self.turn_num:03d}手目: {_after}{piece_name}')
+    self._after = turn_data[3:5]
+    self.piece_name = turn + turn_data[5:]
+    #print(f'{self.turn_num:03d}手目: {_after}{piece_name}')
 
     if not '00' in _before:
       be_y = 9 - int(_before[0])
@@ -70,18 +71,18 @@ class GameLogic:
     else:
       be_y = None
       be_x = None
-      piece_pop = piece_name[1:]
-      if '+' in piece_name:
+      piece_pop = self.piece_name[1:]
+      if '+' in self.piece_name:
         self.sente_hand.remove(piece_pop)
-      if '-' in piece_name:
+      if '-' in self.piece_name:
         self.gote_hand.remove(piece_pop)
 
-    af_y = 9 - int(_after[0])
-    af_x = int(_after[1]) - 1
+    af_y = 9 - int(self._after[0])
+    af_x = int(self._after[1]) - 1
     if self.game_board[af_x][af_y] != '*':
       piece_get = self.game_board[af_x][af_y]
       self.get_piece(piece_get)
-    self.game_board[af_x][af_y] = piece_name
+    self.game_board[af_x][af_y] = self.piece_name
     self.turn_num += 1
 
   def get_piece(self, get):
@@ -128,7 +129,10 @@ class GameLogic:
 
 if __name__ == '__main__':
   game = GameLogic(kifu_data)
+  '''
   for p in game.prompt:
     game.turn_purser(p)
     game.print_board()
     input()
+  '''
+  game.looper(67)
