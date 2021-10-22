@@ -16,7 +16,7 @@ class KifuReader:
     self.board_init = data[8:17]
     self.prompter = [i.strip() for i in data[17:-1]]
     self.game_board = self.init_board(self.board_init)
-    
+
     # `+` 先手
     self.sente_hand = []
     # `-` 後手
@@ -42,16 +42,16 @@ class KifuReader:
     if len(instruction) == 1:
       print('開始')
       self.game_board = self.init_board(self.board_init)
-      return 
+      return
 
     if '%' in instruction:
       return
-    
+
     sg = instruction[0]
     before = instruction[1:3]
     after = instruction[3:5]
     piece_name = sg + instruction[5:]
-    
+
     if not '00' in before:
       be_y = 9 - int(before[0])
       be_x = int(before[1]) - 1
@@ -64,14 +64,14 @@ class KifuReader:
         self.sente_hand.remove(piece_pop)
       if '-' in piece_name:
         self.gote_hand.remove(piece_pop)
-        
+
     af_y = 9 - int(after[0])
     af_x = int(after[1]) - 1
     if self.game_board[af_x][af_y] != '*':
       piece_get = self.game_board[af_x][af_y]
       self.get_piece(piece_get)
     self.game_board[af_x][af_y] = piece_name
-    
+
   def get_piece(self, get):
     piece = self.__convert_piece(get)
     if '+' in get:
@@ -98,11 +98,11 @@ class KifuReader:
     else:
       piece = piece[1:]
     return piece
-    
 
 
 if __name__ == '__main__':
+  from pprint import pprint
   kifu_data = load_kifu()
   kifu = KifuReader(kifu_data)
   kifu.looper(99)
-
+  pprint(kifu.game_board)
