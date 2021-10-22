@@ -26,11 +26,11 @@ class GameLogic:
     self.length_turn = len(self.prompt)
     self.game_board = self.init_board()
 
-    # '+'
-    self.sente_hand = []
-    # '-'
-    self.gote_hand = []
     self.turn_num = 0
+    # `+` 先手
+    self.sente_hand = []
+    # `-` 後手
+    self.gote_hand = []
 
   def init_board(self):
     setlist = []
@@ -41,13 +41,20 @@ class GameLogic:
       setlist.append(line[1:])
     return setlist
 
+  def looper(self, n):
+    for p in self.prompt[:n]:
+      self.turn_purser(p)
+      self.print_board()
+  
   def turn_purser(self, turn_data):
     if len(turn_data) == 1:
       self.game_board = self.init_board()
       print('開始')
       return None
+
     if '%' in turn_data:
-      print('終了')
+      self.turn_num += 1
+      print(f'全{self.turn_num:03d}手 {turn_data}: 終了')
       return None
 
     turn = turn_data[0]
@@ -68,6 +75,7 @@ class GameLogic:
         self.sente_hand.remove(piece_pop)
       if '-' in piece_name:
         self.gote_hand.remove(piece_pop)
+
     af_y = 9 - int(_after[0])
     af_x = int(_after[1]) - 1
     if self.game_board[af_x][af_y] != '*':
@@ -109,12 +117,13 @@ class GameLogic:
     for board in self.game_board:
       line = ' '
       for piece in board:
-        if '*' in piece:
+        if piece == '*':
           piece = ' * '
         line += piece
       print(line)
     print('+---------------------------+')
     print(f'先手手駒: {self.sente_hand}')
+    print('_')
 
 
 if __name__ == '__main__':
@@ -122,5 +131,4 @@ if __name__ == '__main__':
   for p in game.prompt:
     game.turn_purser(p)
     game.print_board()
-    #input()
-
+    input()
