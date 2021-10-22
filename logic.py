@@ -46,7 +46,7 @@ class GameLogic:
       self.turn_purser(p)
     print(f'{self.turn_num:03d}手目: {self._after}{self.piece_name}')
     self.print_board()
-  
+
   def turn_purser(self, turn_data):
     if len(turn_data) == 1:
       self.game_board = self.init_board()
