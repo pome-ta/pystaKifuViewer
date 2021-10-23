@@ -1,6 +1,5 @@
-#!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 from pathlib import Path
+import ui
 
 
 def load_kifu():
@@ -29,14 +28,15 @@ class KifuReader:
       x_line = '_' + setup.strip()
       one_line = [x_line[i:i + 3].strip() for i in range(0, len(x_line), 3)]
       setup_board.append(one_line[1:])
+
+    self.after = 0
+    self.piece_name = 0
     return setup_board
 
   def print_board(self):
     out_txt = f'後手手駒: {self.gote_hand}\n'
     out_txt += '  9  8  7  6  5  4  3  2  1\n'
     out_txt += '+---------------------------+\n'
-    #print(f'後手手駒: {self.gote_hand}')
-    #print('+---------------------------+')
     kanji = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
     for n, board in enumerate(self.game_board):
       line = ' '
@@ -45,22 +45,18 @@ class KifuReader:
           piece = ' * '
         line += piece
       out_txt += line + f'\t{kanji[n]}\n'
-      #print(line)
-    #print('+---------------------------+')
-    #print(f'先手手駒: {self.sente_hand}')
-    #print('_')
     out_txt += '+---------------------------+\n'
     out_txt += f'先手手駒: {self.sente_hand}\n'
-    #print('_')
     return out_txt
-  
-  
-  def looper(self, turn):
+
+  def looper(self, turn=0):
     turn_num = turn + 1
+    if turn_num == 1:
+      self.game_board = self.init_board(self.board_init)
     for loop in range(turn_num):
       for prompt in self.prompter[:loop]:
         self.__purser(prompt)
-    
+
     field = ''
     after = self.after if self.after else 0
     piece_name = self.piece_name if self.piece_name else 0
@@ -71,14 +67,13 @@ class KifuReader:
     return field
 
   def __purser(self, instruction):
-    self.after = 0
-    self.piece_name = 0
+
     if len(instruction) == 1:
-      print('開始')
       self.game_board = self.init_board(self.board_init)
       return
 
     if '%' in instruction:
+      self.after = '終了'
       return
 
     sg = instruction[0]
@@ -105,7 +100,7 @@ class KifuReader:
       piece_get = self.game_board[af_x][af_y]
       self.get_piece(piece_get)
     self.game_board[af_x][af_y] = piece_name
-    
+
     self.after = after
     self.piece_name = piece_name
 
@@ -137,10 +132,51 @@ class KifuReader:
     return piece
 
 
+class RootView(ui.View):
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.bg_color = 'slategray'
+
+    self.game = KifuReader(load_kifu())
+    self.max_value = len(self.game.prompter) + 1
+
+    self.sl = ui.Slider()
+    self.sl.bg_color = 'red'
+    self.sl.flex = 'W'
+    self.sl.action = self.set_value
+    self.sl.continuous = False
+
+    self.add_subview(self.sl)
+
+    self.value = ui.Label()
+    self.value.bg_color = 'green'
+    self.value.text = '0'
+    self.add_subview(self.value)
+
+    self.field = ui.TextView()
+    self.field.font = ('Source Code Pro', 14)
+    self.field.flex = 'W'
+    self.field.text = self.game.looper()
+    self.add_subview(self.field)
+
+  def set_value(self, sender):
+    value = int(sender.value * self.max_value)
+    p = self.game.looper(value)
+    self.field.text = p
+    self.value.text = str(value)
+    self.sl.value = value / self.max_value
+
+  def draw(self):
+    pass
+
+  def layout(self):
+    self.value.x = self.width / 2 - self.value.width / 2
+    self.sl.y = self.height / 2
+    self.value.y = self.sl.y + self.sl.height
+    self.field.height = self.sl.y
+
+
 if __name__ == '__main__':
-  from pprint import pprint
-  kifu_data = load_kifu()
-  kifu = KifuReader(kifu_data)
-  print(kifu.looper(99))
-  
+  root = RootView()
+  root.present(style='fullscreen', orientations=['portrait'])
 
