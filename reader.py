@@ -17,13 +17,12 @@ class KifuReader:
     self.prompter = [i.strip() for i in data[17:-1]]
     self.game_board = self.init_board(self.board_init)
 
+  def init_board(self, board):
     # `+` 先手
     self.sente_hand = []
     # `-` 後手
     self.gote_hand = []
 
-  @staticmethod
-  def init_board(board):
     setup_board = []
     for setup in board:
       # 3つのchar として分離させる
@@ -32,13 +31,48 @@ class KifuReader:
       setup_board.append(one_line[1:])
     return setup_board
 
+  def print_board(self):
+    out_txt = f'後手手駒: {self.gote_hand}\n'
+    out_txt += '  9  8  7  6  5  4  3  2  1\n'
+    out_txt += '+---------------------------+\n'
+    #print(f'後手手駒: {self.gote_hand}')
+    #print('+---------------------------+')
+    kanji = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
+    for n, board in enumerate(self.game_board):
+      line = ' '
+      for piece in board:
+        if piece == '*':
+          piece = ' * '
+        line += piece
+      out_txt += line + f'\t{kanji[n]}\n'
+      #print(line)
+    #print('+---------------------------+')
+    #print(f'先手手駒: {self.sente_hand}')
+    #print('_')
+    out_txt += '+---------------------------+\n'
+    out_txt += f'先手手駒: {self.sente_hand}\n'
+    #print('_')
+    return out_txt
+  
+  
   def looper(self, turn):
-    turn += 1
-    for loop in range(turn):
+    turn_num = turn + 1
+    for loop in range(turn_num):
       for prompt in self.prompter[:loop]:
         self.__purser(prompt)
+    
+    field = ''
+    after = self.after if self.after else 0
+    piece_name = self.piece_name if self.piece_name else 0
+
+    field += f'{turn_num:03d}手目: {after}{piece_name}\n'
+    board = self.print_board()
+    field += board
+    return field
 
   def __purser(self, instruction):
+    self.after = 0
+    self.piece_name = 0
     if len(instruction) == 1:
       print('開始')
       self.game_board = self.init_board(self.board_init)
@@ -71,6 +105,9 @@ class KifuReader:
       piece_get = self.game_board[af_x][af_y]
       self.get_piece(piece_get)
     self.game_board[af_x][af_y] = piece_name
+    
+    self.after = after
+    self.piece_name = piece_name
 
   def get_piece(self, get):
     piece = self.__convert_piece(get)
@@ -104,5 +141,6 @@ if __name__ == '__main__':
   from pprint import pprint
   kifu_data = load_kifu()
   kifu = KifuReader(kifu_data)
-  kifu.looper(99)
-  pprint(kifu.game_board)
+  print(kifu.looper(99))
+  
+
