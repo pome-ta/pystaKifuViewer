@@ -10,13 +10,16 @@ def load_kifu():
 
 class KifuReader:
     def __init__(self, data):
-        self.piece_name = 0
-        self.after = 0
         self.sente_hand = []  # `+` 先手
         self.gote_hand = []  # `-` 後手
+
+        self.after = 0
+        self.piece_name = 0
+
         _header = data[:8]
         self.board_init = data[8:17]
-        self.prompter = [i.strip() for i in data[17:-1]]
+        # self.prompter = [i.strip() for i in data[17:-1]]
+        self.prompter = [i.strip() for i in data[17:]]
         self.game_board = self.init_board(self.board_init)
 
     @staticmethod
@@ -47,6 +50,10 @@ class KifuReader:
         return out_txt
 
     def looper(self, turn=0):
+        for loop in range(turn + 1):
+            print(f'loop: {loop}')
+            self.__purser(loop)
+        '''
         turn_num = turn + 1
         if turn_num == 1:
             self.game_board = self.init_board(self.board_init)
@@ -54,12 +61,13 @@ class KifuReader:
         for loop in range(turn_num):
             for prompt in self.prompter[:loop]:
                 self.__purser(prompt)
+        '''
 
         field = ''
         after = self.after if self.after else 0
         piece_name = self.piece_name if self.piece_name else 0
 
-        field += f'{turn_num:03d}手目: {after}{piece_name}\n'
+        field += f'{turn:03d}手目: {after}{piece_name}\n'
         board = self.__print_board()
         field += board
         return field
@@ -67,8 +75,9 @@ class KifuReader:
     def __init_turn(self):
         pass
 
-    def __purser(self, instruction):
-
+    def __purser(self, num):
+        instruction = self.prompter[num]
+        print(instruction)
         if len(instruction) == 1:
             self.game_board = self.init_board(self.board_init)
             return
@@ -82,16 +91,17 @@ class KifuReader:
         after = instruction[3:5]
         piece_name = sg + instruction[5:]
 
-        if not '00' in before:
-            be_y = 9 - int(before[0])
-            be_x = int(before[1]) - 1
-            self.game_board[be_x][be_y] = '*'
-        else:
+        # xxx: if の反転したけど、直感に反する？
+        if '00' in before:
             piece_pop = piece_name[1:]
             if '+' in piece_name:
                 self.sente_hand.remove(piece_pop)
             if '-' in piece_name:
                 self.gote_hand.remove(piece_pop)
+        else:
+            be_y = 9 - int(before[0])
+            be_x = int(before[1]) - 1
+            self.game_board[be_x][be_y] = '*'
 
         af_y = 9 - int(after[0])
         af_x = int(after[1]) - 1
@@ -134,3 +144,6 @@ class KifuReader:
 
 if __name__ == '__main__':
     game = KifuReader(load_kifu())
+    prm_len = len(game.prompter) - 1
+    stage = game.looper(prm_len)
+    print(stage)
