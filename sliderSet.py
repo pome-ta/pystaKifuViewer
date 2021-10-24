@@ -13,14 +13,17 @@ class KifuReader:
   def __init__(self, data):
     _header = data[:8]
     self.board_init = data[8:17]
-    self.prompter = [i.strip() for i in data[17:-1]]
+    # `data` 最終行の読み取り判断
+    end_list = data[17:] if '%' in data[-1] else data[17:-1]
+    self.prompter = [i.strip() for i in end_list]
     self.game_board = self.init_board(self.board_init)
 
   def init_board(self, board):
-    # `+` 先手
-    self.sente_hand = []
-    # `-` 後手
-    self.gote_hand = []
+    self.sente_hand = []  # `+` 先手手駒
+    self.gote_hand = []  # `-` 後手手駒
+
+    self.after = '開始'
+    self.piece_name = ''
 
     setup_board = []
     for setup in board:
@@ -28,12 +31,10 @@ class KifuReader:
       x_line = '_' + setup.strip()
       one_line = [x_line[i:i + 3].strip() for i in range(0, len(x_line), 3)]
       setup_board.append(one_line[1:])
-
-    self.after = 0
-    self.piece_name = 0
     return setup_board
 
   def __print_board(self):
+    # 盤面を`str` で返す
     out_txt = f'後手手駒: {self.gote_hand}\n'
     out_txt += '  9  8  7  6  5  4  3  2  1\n'
     out_txt += '+---------------------------+\n'
@@ -50,34 +51,25 @@ class KifuReader:
     return out_txt
 
   def looper(self, turn=0):
-    turn_num = turn + 1
-    if turn_num == 1:
-      self.game_board = self.init_board(self.board_init)
-    
-    for loop in range(turn_num):
-      for prompt in self.prompter[:loop]:
-        self.__purser(prompt)
-
+    for loop in range(turn + 1):
+      self.__purser(loop)
     field = ''
     after = self.after if self.after else 0
-    piece_name = self.piece_name if self.piece_name else 0
+    piece_name = self.piece_name if self.piece_name else ''
 
-    field += f'{turn_num:03d}手目: {after}{piece_name}\n'
+    field += f'{turn:03d}手目: {after}{piece_name}\n'
     board = self.__print_board()
     field += board
     return field
-    
-  def __init_turn(self):
-    pass
 
-  def __purser(self, instruction):
-
+  def __purser(self, num):
+    instruction = self.prompter[num]
     if len(instruction) == 1:
       self.game_board = self.init_board(self.board_init)
       return
 
     if '%' in instruction:
-      self.after = '終了'
+      self.after = instruction
       return
 
     sg = instruction[0]
@@ -85,18 +77,17 @@ class KifuReader:
     after = instruction[3:5]
     piece_name = sg + instruction[5:]
 
-    if not '00' in before:
-      be_y = 9 - int(before[0])
-      be_x = int(before[1]) - 1
-      self.game_board[be_x][be_y] = '*'
-    else:
-      be_y = None
-      be_x = None
+    # xxx: if の反転したけど、直感に反する？
+    if '00' in before:
       piece_pop = piece_name[1:]
       if '+' in piece_name:
         self.sente_hand.remove(piece_pop)
       if '-' in piece_name:
         self.gote_hand.remove(piece_pop)
+    else:
+      be_y = 9 - int(before[0])
+      be_x = int(before[1]) - 1
+      self.game_board[be_x][be_y] = '*'
 
     af_y = 9 - int(after[0])
     af_x = int(after[1]) - 1
@@ -118,7 +109,8 @@ class KifuReader:
       self.sente_hand.append(piece)
       self.sente_hand.sort()
 
-  def __convert_piece(self, piece):
+  @staticmethod
+  def __convert_piece(piece):
     if 'TO' in piece:
       piece = 'FU'
     elif 'NY' in piece:
@@ -142,68 +134,67 @@ class RootView(ui.View):
     self.bg_color = 'slategray'
 
     self.game = KifuReader(load_kifu())
-    
-    self.max_value = len(self.game.prompter) + 1
-    self.micro_value = 1 / self.max_value
+
+    self.max = len(self.game.prompter) - 1
+    self.min = 1 / self.max
+    self.step = 0
+    self.step_list = [n * self.min for n in range(self.max + 1)]
 
     self.sl = ui.Slider()
     self.sl.bg_color = 'red'
     self.sl.flex = 'W'
-    self.sl.action = self.set_value
+    self.sl.action = self.steps_slider
     self.sl.continuous = False
-
     self.add_subview(self.sl)
 
     self.value = ui.Label()
     self.value.bg_color = 'green'
-    self.value.text = '0'
     self.add_subview(self.value)
 
     self.back_btn = self.set_btn('iob:ios7_arrow_back_32', 0)
     self.forward_btn = self.set_btn('iob:ios7_arrow_forward_32', 1)
-
     self.add_subview(self.back_btn)
     self.add_subview(self.forward_btn)
 
     self.field = ui.TextView()
-    self.field.font = ('Source Code Pro', 14)
+    self.field.font = ('Source Code Pro', 16)
     self.field.flex = 'W'
     self.field.text = self.game.looper()
     self.add_subview(self.field)
 
+    self.set_play()
+
   def set_btn(self, img, back_forward):
     # forward: 1
     # back: 0
-    txts = ['戻る', '進む']
     _icon = ui.Image.named(img)
     _btn = ui.Button(title='')
     _btn.width = 64
-    _btn.height = 64
+    _btn.height = 128
     _btn.bg_color = 'magenta'
-    #_btn.background_image = _icon
     _btn.image = _icon
     _btn.back_forward = back_forward
-    _btn.action = self.move_play
+    _btn.action = self.steps_btn
     return _btn
 
-  def move_play(self, sender):
+  def steps_btn(self, sender):
     if sender.back_forward:
-      self.sl.value += self.micro_value
+      if self.step < self.max:
+        self.step += 1
     else:
-      self.sl.value -= self.micro_value
-    #print(sender.back_forward)
-    value = int(self.sl.value * self.max_value)
-    p = self.game.looper(value)
-    self.field.text = p
-    self.value.text = str(value)
-    
+      if self.step > 0:
+        self.step -= 1
+    self.sl.value = self.step_list[self.step]
+    self.set_play()
 
-  def set_value(self, sender):
-    value = int(sender.value * self.max_value)
-    p = self.game.looper(value)
+  def steps_slider(self, sender):
+    self.step = int(sender.value * self.max)
+    self.set_play()
+
+  def set_play(self):
+    p = self.game.looper(self.step)
     self.field.text = p
-    self.value.text = str(value)
-    #self.sl.value = self.micro_value * value
+    self.value.text = f'{self.step:03d}'
 
   def draw(self):
     pass
