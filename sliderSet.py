@@ -138,6 +138,7 @@ class RootView(ui.View):
     self.max = len(self.game.prompter) - 1
     self.min = 1 / self.max
     self.step = 0
+    # `slider` 数値用
     self.step_list = [n * self.min for n in range(self.max + 1)]
 
     self.sl = ui.Slider()
@@ -162,7 +163,7 @@ class RootView(ui.View):
     self.field.text = self.game.looper()
     self.add_subview(self.field)
 
-    self.set_play()
+    self.update_load()
 
   def set_btn(self, img, back_forward):
     # forward: 1
@@ -185,13 +186,13 @@ class RootView(ui.View):
       if self.step > 0:
         self.step -= 1
     self.sl.value = self.step_list[self.step]
-    self.set_play()
+    self.update_load()
 
   def steps_slider(self, sender):
     self.step = int(sender.value * self.max)
-    self.set_play()
+    self.update_load()
 
-  def set_play(self):
+  def update_load(self):
     p = self.game.looper(self.step)
     self.field.text = p
     self.value.text = f'{self.step:03d}'
