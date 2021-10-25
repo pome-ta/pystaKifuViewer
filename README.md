@@ -3,9 +3,7 @@
 [Pythonista3](http://omz-software.com/pythonista/) で`.csa` 形式の棋譜データを閲覧
 
 
-[`ui`](http://omz-software.com/pythonista/docs/ios/ui.html) module　を使用
-
-他のgui サポートはしてません
+[`ui`](http://omz-software.com/pythonista/docs/ios/ui.html) module　を使用しているので、Pythonista 以外は動かない
 
 
 `reader.py` なら、`print` してなんとか見れるかも
