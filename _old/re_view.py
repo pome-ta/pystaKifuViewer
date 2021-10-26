@@ -1,3 +1,5 @@
+from pathlib import Path
+from math import pi
 import ui
 
 BLACK = 0.24
@@ -15,11 +17,178 @@ num_kan = {
   9: '九'
 }
 
+KOMA = {
+  'OU': [['玉', '王'], 'black'],
+  'HI': ['飛', 'black'],
+  'KA': ['角', 'black'],
+  'KI': ['金', 'black'],
+  'GI': ['銀', 'black'],
+  'KE': ['桂', 'black'],
+  'KY': ['香', 'black'],
+  'FU': ['歩', 'black'],
+  'TO': ['と', 'red'],
+  'NY': ['杏', 'red'],
+  'NK': ['圭', 'red'],
+  'NG': ['全', 'red'],
+  'UM': ['馬', 'red'],
+  'RY': ['龍', 'red']
+}
+
+TEBAN = {
+  '+': '☖',
+  '-': '☗'
+}
+
+SENTE_rad = ui.Transform.rotation(0)
+GOTE_rad = ui.Transform.rotation(pi)
+
+
+def load_kifu():
+  _path = Path('./kifu.csa')
+  with _path.open(encoding='utf-8') as f:
+    _kifu_data = f.readlines()
+  return _kifu_data
+
+
+class KifuReader:
+  def __init__(self, data):
+    _header = data[:8]
+    self.board_init = data[8:17]
+    # `data` 最終行の読み取り判断
+    end_list = data[17:] if '%' in data[-1] else data[17:-1]
+    self.prompter = [i.strip() for i in end_list]
+    self.game_board = self.init_board(self.board_init)
+
+  def init_board(self, board):
+    self.sente_hand = []  # `+` 先手手駒
+    self.gote_hand = []  # `-` 後手手駒
+    self.after = '開始'
+    self.piece_name = ''
+    setup_board = []
+    for setup in board:
+      # 3つのchar として分離させる
+      x_line = '_' + setup.strip()
+      one_line = [x_line[i:i + 3].strip() for i in range(0, len(x_line), 3)]
+      setup_board.append(one_line[1:])
+    return setup_board
+
+  def print_prompt(self, prompt_num) -> str:
+    instruction = self.prompter[prompt_num]
+    if len(instruction) == 1:
+      telop = '開始'
+      return '開始'
+    if '%' in instruction:
+       return f'{prompt_num:03d}手目: 終局'
+    teban = TEBAN[instruction[0]]
+    _b = instruction[1:3]
+    _a = instruction[3:5]
+    b = f'{_b[0]}{num_kan[int(_b[1])]}'
+    a = f'{_a[0]}{num_kan[int(_a[1])]}'
+    p = KOMA[instruction[5:]][0]
+    telop = instruction
+    return f'{prompt_num:03d}手目: {teban}{a}{p}({b})'
+
+  def __print_board(self):
+    # 盤面を`str` で返す
+    out_txt = f'後手手駒: {self.gote_hand}\n'
+    out_txt += '  9  8  7  6  5  4  3  2  1\n'
+    out_txt += '+---------------------------+\n'
+    kanji = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
+    for n, board in enumerate(self.game_board):
+      line = ' '
+      for piece in board:
+        if piece == '*':
+          piece = ' * '
+        line += piece
+      out_txt += line + f'\t{kanji[n]}\n'
+    out_txt += '+---------------------------+\n'
+    out_txt += f'先手手駒: {self.sente_hand}\n'
+    return out_txt
+
+  def looper(self, turn=0):
+    for loop in range(turn + 1):
+      self.__purser(loop)
+    field = ''
+    after = self.after if self.after else 0
+    piece_name = self.piece_name if self.piece_name else ''
+
+    field += f'{turn:03d}手目: {after}{piece_name}\n'
+    board = self.__print_board()
+    field += board
+    return field
+
+  def __purser(self, num):
+    instruction = self.prompter[num]
+    if len(instruction) == 1:
+      self.game_board = self.init_board(self.board_init)
+      return
+
+    if '%' in instruction:
+      self.after = instruction
+      return
+
+    sg = instruction[0]
+    before = instruction[1:3]
+    after = instruction[3:5]
+    piece_name = sg + instruction[5:]
+
+    # xxx: if の反転したけど、直感に反する？
+    if '00' in before:
+      piece_pop = piece_name[1:]
+      if '+' in piece_name:
+        self.sente_hand.remove(piece_pop)
+      if '-' in piece_name:
+        self.gote_hand.remove(piece_pop)
+    else:
+      be_y = 9 - int(before[0])
+      be_x = int(before[1]) - 1
+      self.game_board[be_x][be_y] = '*'
+
+    af_y = 9 - int(after[0])
+    af_x = int(after[1]) - 1
+    if self.game_board[af_x][af_y] != '*':
+      piece_get = self.game_board[af_x][af_y]
+      self.__get_piece(piece_get)
+    self.game_board[af_x][af_y] = piece_name
+
+    self.after = after
+    self.piece_name = piece_name
+
+  def __get_piece(self, get):
+    piece = self.__convert_piece(get)
+    if '+' in get:
+      self.gote_hand.append(piece)
+      self.gote_hand.sort()
+
+    if '-' in get:
+      self.sente_hand.append(piece)
+      self.sente_hand.sort()
+
+  @staticmethod
+  def __convert_piece(piece):
+    if 'TO' in piece:
+      piece = 'FU'
+    elif 'NY' in piece:
+      piece = 'KY'
+    elif 'NK' in piece:
+      piece = 'KE'
+    elif 'NG' in piece:
+      piece = 'GI'
+    elif 'UM' in piece:
+      piece = 'KA'
+    elif 'RY' in piece:
+      piece = 'HI'
+    else:
+      piece = piece[1:]
+    return piece
+
+
+# --- View
+
 
 class Cell(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    #self.bg_color = 'cyan'
     self._text = ''
     self.label = ui.Label()
     self.pos_x = ui.Label()
@@ -29,8 +198,8 @@ class Cell(ui.View):
     self.pos_x.alignment = ui.ALIGN_CENTER
     self.pos_y.alignment = ui.ALIGN_CENTER
 
-    self.label.text_color = BLACK
-    self.label.font = ('Source Code Pro', 14)
+    self.label.text_color = 'black'
+    self.label.font = ('Source Code Pro', 16)
     self.label.flex = 'WH'
 
     self.pos_x.font, self.pos_y.font = [('Source Code Pro', 8)] * 2
@@ -44,6 +213,7 @@ class Cell(ui.View):
     #self.pos_x.bg_color = self.pos_y.bg_color = color
 
     pos_size = min(self.width, self.height) / 4
+    self.pos_x.alpha, self.pos_y.alpha = [0.25] * 2
     self.pos_x.width, self.pos_x.height = [pos_size] * 2
     self.pos_y.width, self.pos_y.height = [pos_size] * 2
     self.pos_y.x = self.width - self.pos_y.width
@@ -131,6 +301,26 @@ class FieldMatrix(ui.View):
       x_pos = pos
       y_pos += y_pos
 
+  def set_game(self, board):
+    for cells, clm in zip(self.cells, board):
+      for cell, piece in zip(cells, clm):
+        cell.text = ''
+        if '*' != piece:
+          if piece[1:] == 'OU':
+            _ou = KOMA[piece[1:]][0]
+            cell.label.text_color = KOMA[piece[1:]][1]
+            if piece[0] == '+':
+              cell.text = _ou[0]
+            if piece[0] == '-':
+              cell.text = _ou[1]
+          else:
+            cell.text = KOMA[piece[1:]][0]
+            cell.label.text_color = KOMA[piece[1:]][1]
+          if piece[0] == '+':
+            cell.label.transform = SENTE_rad
+          if piece[0] == '-':
+            cell.label.transform = GOTE_rad
+
 
 class StageView(ui.View):
   def __init__(self, *args, **kwargs):
@@ -160,30 +350,103 @@ class BoardView(ui.View):
     `self.layout` で、サイズ fix
   """
 
-  def __init__(self, *args, **kwargs):
+  def __init__(self, parent, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    self.bg_color = 'maroon'
+    #self.bg_color = 'maroon'
+    self.parent = parent
+
+    self.game = KifuReader(load_kifu())
+    self.max = len(self.game.prompter) - 1
+    self.min = 1 / self.max
+    self.step = 0
+    # `slider` 数値用
+    self.step_list = [n * self.min for n in range(self.max + 1)]
+
     self.flex = 'WH'
     self.stage = StageView()
     self.add_subview(self.stage)
+
+    self.sl = ui.Slider()
+    self.sl.bg_color = 'darkgray'
+    self.sl.flex = 'W'
+    self.sl.action = self.steps_slider
+    #self.sl.continuous = False
+    self.add_subview(self.sl)
+
+    self.back_btn = self.set_btn('iob:ios7_arrow_back_32', 0)
+    self.forward_btn = self.set_btn('iob:ios7_arrow_forward_32', 1)
+    self.add_subview(self.back_btn)
+    self.add_subview(self.forward_btn)
+
+    # 盤面初期化
+    self.game.looper()
+    self.update_game()
+
+  def steps_slider(self, sender):
+    self.step = int(sender.value * self.max)
+    self.update_game()
+
+  def update_game(self):
+    self.game.looper(self.step)
+    self.stage.field.set_game(self.game.game_board)
+    self.parent.name = self.game.print_prompt(self.step)
+
+  def set_btn(self, img, back_forward):
+    # forward: 1
+    # back: 0
+    _icon = ui.Image.named(img)
+    _btn = ui.Button(title='')
+    _btn.width = 64
+    _btn.height = 128
+    _btn.bg_color = 'darkgray'
+    _btn.image = _icon
+    _btn.back_forward = back_forward
+    _btn.action = self.steps_btn
+    return _btn
+
+  def steps_btn(self, sender):
+    if sender.back_forward:
+      if self.step < self.max:
+        self.step += 1
+    else:
+      if self.step > 0:
+        self.step -= 1
+    self.sl.value = self.step_list[self.step]
+    self.update_game()
 
   def layout(self):
     """ layout
     `self.flex = 'WH'` で、サイズfix
     """
-    square_size = min(self.width, self.height)
+    w = self.width
+    h = self.height
+    square_size = min(w, h)
     self.stage.setup_stage(square_size)
+    self.stage.field.set_game(self.game.game_board)
+
+    self.back_btn.y, self.forward_btn.y = [square_size * 1.024] * 2
+    self.forward_btn.x = w - self.forward_btn.width
+
+    self.sl.width = w - (self.back_btn.width + self.forward_btn.width)
+    self.sl.height = min(self.back_btn.height, self.forward_btn.height)
+    self.sl.center = self.center
+    self.sl.y = min(self.back_btn.y, self.forward_btn.y)
+    '''
+    self.sl.y = square_size + (self.height - square_size) / 2
+    self.back_btn.y = square_size + (self.height - square_size) / 2
+    self.forward_btn.y = square_size + (self.height - square_size) / 2
+    '''
 
 
 class RootView(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 'slategray'
-    self.board = BoardView()
+    self.board = BoardView(self)
     self.add_subview(self.board)
 
 
 if __name__ == '__main__':
+  # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
-
