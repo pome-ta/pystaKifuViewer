@@ -253,6 +253,30 @@ class FieldMatrix(ui.View):
     self.dots = [[Dot() for dx in range(2)] for dy in range(2)]
     [[self.add_subview(dx) for dx in dy] for dy in self.dots]
 
+  def move_cells(self, prompt):
+    for x in range(MATRIX):
+      for y in range(MATRIX):
+        _cell = self.cells[x][y]
+        _cell.bg_color = None
+    if len(prompt) == 1:
+      return
+    if '%' in prompt:
+      return
+    
+    _a = prompt[3:5]
+    a_x = MATRIX - int(_a[0])
+    a_y = int(_a[1]) - 1
+    self.cells[a_y][a_x].bg_color = 'peru'
+    
+    _b = prompt[1:3]
+    if '00' in _b:
+      pass
+    else:
+      b_x =MATRIX- int(_b[0])
+      b_y = int(_b[1]) -1
+      self.cells[b_y][b_x].bg_color = 'khaki'
+      
+
   def setup_field(self, parent_size):
     self.width = parent_size
     self.height = parent_size
@@ -341,7 +365,10 @@ class StageView(ui.View):
     min_size = parent_size / 32
     # xxx: stage のsize により、変更
     self.field.setup_field(parent_size - min_size)
-    self.field.center = self.center
+    self.field.x = (self.width / 2) - (self.field.width / 2)
+    self.field.y = (self.height / 2) - (self.field.height / 2)
+    
+    #self.field.center = self.center
 
 
 class BoardView(ui.View):
@@ -372,6 +399,9 @@ class BoardView(ui.View):
     self.stage = StageView()
     self.add_subview(self.stage)
 
+    self.sente = ui.View()
+    self.gote = ui.View()
+    
     self.sl = ui.Slider()
     self.sl.bg_color = 'darkgray'
     self.sl.flex = 'W'
@@ -395,6 +425,7 @@ class BoardView(ui.View):
   def update_game(self):
     self.game.looper(self.step)
     self.stage.field.set_game(self.game.game_board)
+    self.stage.field.move_cells(self.game.prompter[self.step])
     self.parent.name = self.game.print_prompt(self.step)
 
   def set_btn(self, img, back_forward):
@@ -427,10 +458,13 @@ class BoardView(ui.View):
     w = self.width
     h = self.height
     square_size = min(w, h)
+    
     self.stage.setup_stage(square_size)
     self.stage.field.set_game(self.game.game_board)
+    
+    #self.stage.y = (square_size / 2) - (self.stage.height / 4)
 
-    self.back_btn.y, self.forward_btn.y = [square_size * 1.024] * 2
+    self.back_btn.y, self.forward_btn.y = [(self.stage.y + self.stage.height)* 1.024] * 2
     self.forward_btn.x = w - self.forward_btn.width
 
     self.sl.width = w - (self.back_btn.width + self.forward_btn.width)
@@ -456,3 +490,4 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
+
