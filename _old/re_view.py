@@ -34,10 +34,7 @@ KOMA = {
   'RY': ['龍', 'red']
 }
 
-TEBAN = {
-  '+': '☖',
-  '-': '☗'
-}
+TEBAN = {'+': '☖', '-': '☗'}
 
 SENTE_rad = ui.Transform.rotation(0)
 GOTE_rad = ui.Transform.rotation(pi)
@@ -78,13 +75,22 @@ class KifuReader:
       telop = '開始'
       return '開始'
     if '%' in instruction:
-       return f'{prompt_num:03d}手目: 終局'
+      return f'{prompt_num:03d}手目: 終局'
     teban = TEBAN[instruction[0]]
     _b = instruction[1:3]
     _a = instruction[3:5]
-    b = f'{_b[0]}{num_kan[int(_b[1])]}'
+    # xxx: 雑処理
+    if '00' in _b:
+      b = '00'
+    else:
+      b = f'{_b[0]}{num_kan[int(_b[1])]}'
     a = f'{_a[0]}{num_kan[int(_a[1])]}'
     p = KOMA[instruction[5:]][0]
+    if len(p) == 2:
+      if '+' in instruction:
+        p = p[0]
+      if '-' in instruction:
+        p = p[1]
     telop = instruction
     return f'{prompt_num:03d}手目: {teban}{a}{p}({b})'
 
@@ -370,7 +376,7 @@ class BoardView(ui.View):
     self.sl.bg_color = 'darkgray'
     self.sl.flex = 'W'
     self.sl.action = self.steps_slider
-    #self.sl.continuous = False
+    self.sl.continuous = False
     self.add_subview(self.sl)
 
     self.back_btn = self.set_btn('iob:ios7_arrow_back_32', 0)
