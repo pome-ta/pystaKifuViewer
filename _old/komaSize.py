@@ -1,5 +1,5 @@
-from math import sin, cos
 
+from math import sin, cos, pi
 '''
 底辺の長さ：1
 底辺と高さの比：1.1
@@ -26,6 +26,11 @@ from math import sin, cos
 の座標: [22.5, 49.50000000000001]
 
 
+頂角の座標	    [0.00, 0.00]
+中角(左)の座標	[-103.04, 33.48]
+中角(右)の座標	[103.04, 33.48]
+底角(左)の座標	[-150.00, 330.00]
+底角(右)の座標	[150.00, 330.00]
 
 
 function App(props) {
@@ -78,20 +83,20 @@ function App(props) {
 width = 45
 height = 45
 
-p = 144
-r = 81
-c = width
-mu = 1.1
+top_degree = 144
+bottom_degree = 81
+bottomline_length = 300
+aspect_ratio = 1.1
 
-q = (540 - (p + (2 * r))) / 2
+top_radian = top_degree * (pi / 180)
+bottom_radian = bottom_degree * (pi / 180)
+a = bottomline_length * (
+  aspect_ratio * cos(bottom_radian) -
+  (sin(bottom_radian) / 2)) / cos(bottom_radian + (top_radian / 2))
 
-a = (c * (mu * cos(r))) - (c * (sin(r) / 2)) / cos((p / 2) + r)
-b = (c * (cos(p / 2) / 2)) - (mu * sin(p / 2)) / cos((p / 2) + r)
+qX = a * sin(top_radian / 2)
+qY = a * cos(top_radian / 2)
+rX = bottomline_length / 2
+rY = bottomline_length * aspect_ratio
 
-qx = a * sin(p / 2)
-qy = -(a * cos(p / 2))
-
-rx = c / 2
-ry = -mu * c
-
-foo = 'foo'
+print(qX, qY, rX, rY)
