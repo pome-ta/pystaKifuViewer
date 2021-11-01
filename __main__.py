@@ -60,20 +60,34 @@ def split_data(data):
   return board, prompt
 
 
+def sujidan_to_index(sujidan_str) -> [int, int]:
+  suji_int = int(sujidan_str[0])
+  dan_int = int(sujidan_str[1])
+  x = dan_int - 1
+  y = 9 - suji_int
+  return x, y
+
+
+def index_to_sujidan():
+  pass
+
+
 class KifuReader:
-  def __init__(self, data):
-    self.board_init: list
-    self.prompter: list
-    self.game_board: list
-    self.sente_hand: list  # `+` 先手手駒
-    self.gote_hand: list  # `-` 後手手駒
-    self.after: str
-    self.piece_name: str
+  def __init__(self, data, debug=0):
+    self.game_board: list  # 現在ほboard 上の情報
+    self.board_init: list  # 初手盤面
+    self.prompter: list  # 一手づつの情報
+
+    self.sente_hand: list = []  # `+` 先手手駒
+    self.gote_hand: list = []  # `-` 後手手駒
+    self.after: str = ''
+    self.piece_name: str = ''
+    self.debug = debug + 1
 
     self.board_init, self.prompter = split_data(data)
-    self.game_board = self.init_board(self.board_init)
+    self.game_board = self.init_board()
 
-  def init_board(self, board):
+  def init_board(self):
     """
     最初の配置盤面を返す
     """
@@ -82,7 +96,7 @@ class KifuReader:
     self.after = '開始'
     self.piece_name = ''
     setup_board = []
-    for setup in board:
+    for setup in self.board_init:
       # 3つのchar として分離させる
       x_line = '_' + setup.strip()
       one_line = [x_line[i:i + 3].strip() for i in range(0, len(x_line), 3)]
@@ -91,84 +105,71 @@ class KifuReader:
 
   def looper(self, turn=0):
     # todo: 毎回初手から、指定(`turn`) 手目までを回す
-    for loop in range(turn + 1):
-      self.__purser(loop)
+    [self.__purser(loop) for loop in range(turn + 1)]
 
-    field = ''
-    # xxx: 要調査
-    after = self.after if self.after else 0
-    piece_name = self.piece_name if self.piece_name else ''
-
-    field += f'{turn:03d}手目: {after}{piece_name}\n'
-    board = self.__print_board()
-    field += board
-
-    return field
+    if self.debug:
+      self.__print_board(turn)
 
   def __purser(self, num):
     instruction = self.prompter[num]
     # todo: `num = 0` は、初期盤面で早期return
-    if len(instruction) == 1:
-      self.game_board = self.init_board(self.board_init)
-      return
+    if len(instruction) == 1:  # `+` 一文字のため
+      self.game_board = self.init_board()
+      return None
     # todo: 終局場面なのでreturn
-    if '%' in instruction:
+    if '%' in instruction:  # `%TORYO` などをキャッチ
       self.after = instruction
-      return
+      return None
 
-    sg = instruction[0]
+    teban = instruction[0]
     before = instruction[1:3]
     after = instruction[3:5]
-    piece_name = sg + instruction[5:]
+    piece = instruction[5:]
 
     # xxx: if の反転したけど、直感に反する？
     if '00' in before:
-      piece_pop = piece_name[1:]
-      if '+' in piece_name:
-        self.sente_hand.remove(piece_pop)
-      if '-' in piece_name:
-        self.gote_hand.remove(piece_pop)
+      if '+' in teban:
+        self.sente_hand.remove(piece)
+      if '-' in teban:
+        self.gote_hand.remove(piece)
     else:
-      be_y = 9 - int(before[0])
-      be_x = int(before[1]) - 1
+      be_x, be_y = sujidan_to_index(before)
       self.game_board[be_x][be_y] = '*'
 
-    af_y = 9 - int(after[0])
-    af_x = int(after[1]) - 1
+    af_x, af_y = sujidan_to_index(after)
     if self.game_board[af_x][af_y] != '*':
-      piece_get = self.game_board[af_x][af_y]
-      self.__get_piece(piece_get)
-    self.game_board[af_x][af_y] = piece_name
+      self.__get_piece(self.game_board[af_x][af_y])
+    self.game_board[af_x][af_y] = teban + piece
 
     self.after = after
-    self.piece_name = piece_name
+    self.piece_name = teban + piece
 
-  def __get_piece(self, get):
-    piece = self.__convert_piece(get)
-    if '+' in get:
+  def __get_piece(self, teban_piece):
+    piece = self.__convert_piece(teban_piece)
+    if '+' in teban_piece:
       self.gote_hand.append(piece)
       self.gote_hand.sort()
 
-    if '-' in get:
+    if '-' in teban_piece:
       self.sente_hand.append(piece)
       self.sente_hand.sort()
 
   @staticmethod
-  def __convert_piece(piece):
-    if 'TO' in piece:
+  def __convert_piece(teban_piece):
+    if 'TO' in teban_piece:
       piece = 'FU'
-    elif 'NY' in piece:
+    elif 'NY' in teban_piece:
       piece = 'KY'
-    elif 'NK' in piece:
+    elif 'NK' in teban_piece:
       piece = 'KE'
-    elif 'NG' in piece:
+    elif 'NG' in teban_piece:
       piece = 'GI'
-    elif 'UM' in piece:
+    elif 'UM' in teban_piece:
       piece = 'KA'
-    elif 'RY' in piece:
+    elif 'RY' in teban_piece:
       piece = 'HI'
     else:
-      piece = piece[1:]
+      piece = teban_piece[1:]
     return piece
 
   def print_prompt(self, prompt_num) -> str:
@@ -199,9 +200,17 @@ class KifuReader:
     telop = instruction
     return f'{prompt_num:03d}手目: {teban}{a}{p}({b})'
 
-  def __print_board(self):
+  def __print_board(self, turn):
     # 盤面を`str` で返す
     # テスト用
+
+    field = ''
+    # xxx: 要調査
+    after = self.after if self.after else 0
+    piece_name = self.piece_name if self.piece_name else ''
+
+    field += f'{turn:03d}手目: {after}{piece_name}\n'
+
     out_txt = f'後手手駒: {self.gote_hand}\n'
     out_txt += '  9  8  7  6  5  4  3  2  1\n'
     out_txt += '+---------------------------+\n'
@@ -215,7 +224,10 @@ class KifuReader:
       out_txt += line + f'\t{kanji[n]}\n'
     out_txt += '+---------------------------+\n'
     out_txt += f'先手手駒: {self.sente_hand}\n'
-    return out_txt
+
+    board = out_txt
+    field += board
+    print(field)
 
 
 # --- View
@@ -512,4 +524,3 @@ if __name__ == '__main__':
   root = RootView()
   #root.present(style='fullscreen', orientations=['portrait'])
   root.present()
-
