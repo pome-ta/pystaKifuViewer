@@ -74,15 +74,15 @@ def index_to_sujidan():
 
 class KifuReader:
   def __init__(self, data, debug=0):
-    self.game_board: list  # 現在ほboard 上の情報
+    self.game_board: list  # 現在のboard 上の状態
     self.board_init: list  # 初手盤面
-    self.prompter: list  # 一手づつの情報
+    self.prompter: list  # 一手づつの指示情報
 
-    self.sente_hand: list = []  # `+` 先手手駒
-    self.gote_hand: list = []  # `-` 後手手駒
+    self.sente_hand: list = []  # `+` 先手保持手駒
+    self.gote_hand: list = []  # `-` 後手保持手駒
     self.after: str = ''
     self.piece_name: str = ''
-    self.debug = debug + 1
+    self.debug = debug  # + 1
 
     self.board_init, self.prompter = split_data(data)
     self.game_board = self.init_board()
@@ -106,17 +106,16 @@ class KifuReader:
   def looper(self, turn=0):
     # todo: 毎回初手から、指定(`turn`) 手目までを回す
     [self.__purser(loop) for loop in range(turn + 1)]
-
-    if self.debug:
-      self.__print_board(turn)
+    # todo: `debug` の`bool` により判定
+    self.__print_board(turn) if self.debug else 0
 
   def __purser(self, num):
     instruction = self.prompter[num]
-    # todo: `num = 0` は、初期盤面で早期return
+    # todo: `num = 0` は、初期盤面で即時return
     if len(instruction) == 1:  # `+` 一文字のため
       self.game_board = self.init_board()
       return None
-    # todo: 終局場面なのでreturn
+    # todo: 終局場面は即時return
     if '%' in instruction:  # `%TORYO` などをキャッチ
       self.after = instruction
       return None
@@ -203,7 +202,6 @@ class KifuReader:
   def __print_board(self, turn):
     # 盤面を`str` で返す
     # テスト用
-
     field = ''
     # xxx: 要調査
     after = self.after if self.after else 0
