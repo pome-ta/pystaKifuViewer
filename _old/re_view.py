@@ -41,11 +41,12 @@ SENTE_rad = ui.Transform.rotation(0)
 GOTE_rad = ui.Transform.rotation(pi)
 
 
-def load_kifu():
-  _path = Path('./kifu.csa')
-  with _path.open(encoding='utf-8') as f:
-    _kifu_data = f.readlines()
-  return _kifu_data
+def load_kifu(path=0):
+  # _path = Path('./kifu.csa')
+  load_path = Path(path) if path else Path('./kifu.csa')
+  with load_path.open(encoding='utf-8') as f:
+    data = f.readlines()
+  return data
 
 
 class KifuReader:
@@ -53,8 +54,8 @@ class KifuReader:
     _header = data[:8]
     self.board_init = data[8:17]
     # `data` 最終行の読み取り判断
-    end_list = data[17:] if '%' in data[-1] else data[17:-1]
-    self.prompter = [i.strip() for i in end_list]
+    prompt_list = data[17:] if '%' in data[-1] else data[17:-1]
+    self.prompter = [i.strip() for i in prompt_list]
     self.game_board = self.init_board(self.board_init)
 
   def init_board(self, board):
