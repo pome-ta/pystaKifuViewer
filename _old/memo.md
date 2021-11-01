@@ -56,6 +56,28 @@ NG
 UM
 RY
 
+## 問題
+
+ループの`x`, `y` 逆になるぞ
+
+```.py
+mtrx = 9
+lc = [[f'x: {x}, y: {y}' for x in range(mtrx)] for y in range(mtrx)]
+
+ll = []
+il = []
+
+for y in range(mtrx):
+  for x in range(mtrx):
+    il.append(f'x: {x}, y: {y}')
+  ll.append(il)
+  il = []
+
+
+```
+
+
+
 
 ## 思いつき
 
