@@ -3,6 +3,7 @@ from math import pi
 import ui
 
 BLACK = 0.24
+RED = 'red'
 
 MATRIX = 9
 num_kan = {
@@ -18,20 +19,20 @@ num_kan = {
 }
 
 KOMA = {
-  'OU': [['玉', '王'], 'black'],
-  'HI': ['飛', 'black'],
-  'KA': ['角', 'black'],
-  'KI': ['金', 'black'],
-  'GI': ['銀', 'black'],
-  'KE': ['桂', 'black'],
-  'KY': ['香', 'black'],
-  'FU': ['歩', 'black'],
-  'TO': ['と', 'red'],
-  'NY': ['杏', 'red'],
-  'NK': ['圭', 'red'],
-  'NG': ['全', 'red'],
-  'UM': ['馬', 'red'],
-  'RY': ['龍', 'red']
+  'OU': [['玉', '王'], BLACK],
+  'HI': ['飛', BLACK],
+  'KA': ['角', BLACK],
+  'KI': ['金', BLACK],
+  'GI': ['銀', BLACK],
+  'KE': ['桂', BLACK],
+  'KY': ['香', BLACK],
+  'FU': ['歩', BLACK],
+  'TO': ['と', RED],
+  'NY': ['杏', RED],
+  'NK': ['圭', RED],
+  'NG': ['全', RED],
+  'UM': ['馬', RED],
+  'RY': ['龍', RED]
 }
 
 TEBAN = {'+': '☖', '-': '☗'}
@@ -57,6 +58,9 @@ class KifuReader:
     self.game_board = self.init_board(self.board_init)
 
   def init_board(self, board):
+    """
+    最初の配置盤面を返す
+    """
     self.sente_hand = []  # `+` 先手手駒
     self.gote_hand = []  # `-` 後手手駒
     self.after = '開始'
@@ -70,6 +74,9 @@ class KifuReader:
     return setup_board
 
   def print_prompt(self, prompt_num) -> str:
+    """
+    header に手を表示
+    """
     instruction = self.prompter[prompt_num]
     if len(instruction) == 1:
       telop = '開始'
@@ -80,10 +87,9 @@ class KifuReader:
     _b = instruction[1:3]
     _a = instruction[3:5]
     # xxx: 雑処理
-    if '00' in _b:
-      b = '00'
-    else:
-      b = f'{_b[0]}{num_kan[int(_b[1])]}'
+    # 手駒を盤面に出す
+    b = '打つ' if '00' in _b else f'{_b[0]}{num_kan[int(_b[1])]}'
+
     a = f'{_a[0]}{num_kan[int(_a[1])]}'
     p = KOMA[instruction[5:]][0]
     if len(p) == 2:
@@ -93,23 +99,6 @@ class KifuReader:
         p = p[1]
     telop = instruction
     return f'{prompt_num:03d}手目: {teban}{a}{p}({b})'
-
-  def __print_board(self):
-    # 盤面を`str` で返す
-    out_txt = f'後手手駒: {self.gote_hand}\n'
-    out_txt += '  9  8  7  6  5  4  3  2  1\n'
-    out_txt += '+---------------------------+\n'
-    kanji = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
-    for n, board in enumerate(self.game_board):
-      line = ' '
-      for piece in board:
-        if piece == '*':
-          piece = ' * '
-        line += piece
-      out_txt += line + f'\t{kanji[n]}\n'
-    out_txt += '+---------------------------+\n'
-    out_txt += f'先手手駒: {self.sente_hand}\n'
-    return out_txt
 
   def looper(self, turn=0):
     for loop in range(turn + 1):
@@ -188,8 +177,28 @@ class KifuReader:
       piece = piece[1:]
     return piece
 
+  def __print_board(self):
+    # 盤面を`str` で返す
+    # テスト用
+    out_txt = f'後手手駒: {self.gote_hand}\n'
+    out_txt += '  9  8  7  6  5  4  3  2  1\n'
+    out_txt += '+---------------------------+\n'
+    kanji = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
+    for n, board in enumerate(self.game_board):
+      line = ' '
+      for piece in board:
+        if piece == '*':
+          piece = ' * '
+        line += piece
+      out_txt += line + f'\t{kanji[n]}\n'
+    out_txt += '+---------------------------+\n'
+    out_txt += f'先手手駒: {self.sente_hand}\n'
+    return out_txt
+
 
 # --- View
+
+#pentagon
 
 
 class Cell(ui.View):
@@ -214,6 +223,7 @@ class Cell(ui.View):
     self.add_subview(self.label)
 
   def set_label_pos(self, x, y, *args):
+
     # xxx: `color = args` とりあえず
     color = args[0]
     #self.pos_x.bg_color = self.pos_y.bg_color = color
@@ -262,26 +272,26 @@ class FieldMatrix(ui.View):
       return
     if '%' in prompt:
       return
-    
+
     _a = prompt[3:5]
     a_x = MATRIX - int(_a[0])
     a_y = int(_a[1]) - 1
     self.cells[a_y][a_x].bg_color = 'peru'
-    
+
     _b = prompt[1:3]
     if '00' in _b:
       pass
     else:
-      b_x =MATRIX- int(_b[0])
-      b_y = int(_b[1]) -1
+      b_x = MATRIX - int(_b[0])
+      b_y = int(_b[1]) - 1
       self.cells[b_y][b_x].bg_color = 'khaki'
-      
 
   def setup_field(self, parent_size):
     self.width = parent_size
     self.height = parent_size
 
     cell_size = parent_size / MATRIX
+    #print(cell_size)
     x_pos = 0
     y_pos = 0
     for x in range(MATRIX):
@@ -367,22 +377,11 @@ class StageView(ui.View):
     self.field.setup_field(parent_size - min_size)
     self.field.x = (self.width / 2) - (self.field.width / 2)
     self.field.y = (self.height / 2) - (self.field.height / 2)
-    
+
     #self.field.center = self.center
 
 
 class BoardView(ui.View):
-  """ BoardView
-  盤面 index
-    盤面 9 x 9
-  slider
-  前後 Button
-  など、諸々を合体するところ
-  
-  RootView 上で、`flex = 'WH'` で全画面サイズ取得
-    `self.layout` で、サイズ fix
-  """
-
   def __init__(self, parent, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     #self.bg_color = 'maroon'
@@ -401,7 +400,7 @@ class BoardView(ui.View):
 
     self.sente = ui.View()
     self.gote = ui.View()
-    
+
     self.sl = ui.Slider()
     self.sl.bg_color = 'darkgray'
     self.sl.flex = 'W'
@@ -452,19 +451,18 @@ class BoardView(ui.View):
     self.update_game()
 
   def layout(self):
-    """ layout
-    `self.flex = 'WH'` で、サイズfix
-    """
     w = self.width
     h = self.height
     square_size = min(w, h)
-    
+
     self.stage.setup_stage(square_size)
     self.stage.field.set_game(self.game.game_board)
-    
+
     #self.stage.y = (square_size / 2) - (self.stage.height / 4)
 
-    self.back_btn.y, self.forward_btn.y = [(self.stage.y + self.stage.height)* 1.024] * 2
+    self.back_btn.y, self.forward_btn.y = [
+      (self.stage.y + self.stage.height) * 1.024
+    ] * 2
     self.forward_btn.x = w - self.forward_btn.width
 
     self.sl.width = w - (self.back_btn.width + self.forward_btn.width)
