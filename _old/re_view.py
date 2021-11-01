@@ -77,6 +77,7 @@ class KifuReader:
     """
     header に手を表示
     """
+    # xxx: View に持たせる？
     instruction = self.prompter[prompt_num]
     if len(instruction) == 1:
       telop = '開始'
@@ -101,9 +102,12 @@ class KifuReader:
     return f'{prompt_num:03d}手目: {teban}{a}{p}({b})'
 
   def looper(self, turn=0):
+    # todo: 毎回初手から、指定(`turn`) 手まで読み込み
     for loop in range(turn + 1):
       self.__purser(loop)
+    
     field = ''
+    # xxx: 要調査
     after = self.after if self.after else 0
     piece_name = self.piece_name if self.piece_name else ''
 
@@ -345,6 +349,7 @@ class FieldMatrix(ui.View):
     for cells, clm in zip(self.cells, board):
       for cell, piece in zip(cells, clm):
         cell.text = ''
+        # xxx: `OU`, `GY` 処理をスマートにしたい
         if '*' != piece:
           if piece[1:] == 'OU':
             _ou = KOMA[piece[1:]][0]
@@ -487,5 +492,6 @@ class RootView(ui.View):
 if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
-  root.present(style='fullscreen', orientations=['portrait'])
+  #root.present(style='fullscreen', orientations=['portrait'])
+  root.present()
 
