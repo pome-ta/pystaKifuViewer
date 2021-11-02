@@ -133,29 +133,67 @@ class KifuReader:
     return piece
 
 
-class BoardView(ui.View):
+class StageView(ui.View):
+  """
+  盤面と駒台
+  """
+
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.bg_color = 'cyan'
+    self.ban = ui.View()
+    self.ban.bg_color = 'magenta'
+    self.add_subview(self.ban)
+
+  def draw(self):
+    ui.set_color(0)
+    line = ui.Path()
+    line.move_to(0, 0)
+    line.line_to(self.width, self.height)
+    line.stroke()
+
+
+class AreaView(ui.View):
   def __init__(self, parent, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
+    # xxx: Navigation Bar 操作用
     self.parent = parent
-    self.bg_color = 'maroon'
+    #self.bg_color = 'maroon'
     self.flex = 'WH'
+    self.parts_color = 'silver'
     self.init_setup()
+    self.stage = StageView()
+
+    self.add_subview(self.sl)
+    self.add_subview(self.back_btn)
+    self.add_subview(self.forward_btn)
+    self.add_subview(self.stage)
 
   def layout(self):
-    # xxx: 親呼ぶ
-    square_size = min(self.width, self.height)
-    margin_size = square_size * 0.2
-    w = self.width - margin_size
-    h = self.height - margin_size
+    min_parent = min(self.parent.width, self.parent.height)
+    margin_size = min_parent * 0.064
+
+    w = self.width = self.parent.width - margin_size
+    h = self.height = self.parent.height - margin_size
+    square_size = min(w, h)
 
     # スライダー長さ確定
     self.sl.width = w - (self.back_btn.width + self.forward_btn.width)
     self.sl.height = min(self.back_btn.height, self.forward_btn.height)
-
     # ボタン類位置左右振り
     self.back_btn.x = 0
     self.forward_btn.x = w - self.forward_btn.width
-    self.sl.x = self.back_btn.width
+    # スライダーをセンターに
+    self.sl.x = (w / 2) - (self.sl.width / 2)
+    # ボタンとスライダーを一気に移動
+    _parts_max = max(self.back_btn.height, self.forward_btn.height)
+    _y = self.height - _parts_max - (margin_size / 2)
+    self.back_btn.y, self.sl.y, self.forward_btn.y = [_y] * 3
+
+    self.stage.width = w
+    self.stage.height = _y - (margin_size / 2)
+    self.stage.x = (w / 2) - (self.stage.width / 2)
+    #self.stage.y = margin_size / 2
 
   def init_setup(self):
     self.setup_reader()
@@ -172,11 +210,10 @@ class BoardView(ui.View):
 
   def setup_slider(self):
     self.sl = ui.Slider()
-    self.sl.bg_color = 'darkgray'
+    self.sl.bg_color = self.parts_color
     self.sl.flex = 'W'
     self.sl.action = self.steps_slider
     self.sl.continuous = False
-    self.add_subview(self.sl)
 
   def steps_slider(self, sender):
     self.step = int(sender.value * self.max)
@@ -185,17 +222,14 @@ class BoardView(ui.View):
   def setup_btns(self):
     self.back_btn = self.set_btn('iob:ios7_arrow_back_32', 0)
     self.forward_btn = self.set_btn('iob:ios7_arrow_forward_32', 1)
-    self.add_subview(self.back_btn)
-    self.add_subview(self.forward_btn)
 
   def set_btn(self, img, back_forward):
-    # forward: 1
-    # back: 0
+    # forward: 1, back: 0
     icon = ui.Image.named(img)
     btn = ui.Button(title='')
     btn.width = 64
     btn.height = 128
-    btn.bg_color = 'darkgray'
+    btn.bg_color = self.parts_color
     btn.image = icon
     btn.back_forward = back_forward
     btn.action = self.steps_btn
@@ -216,12 +250,17 @@ class RootView(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 'slategray'
-    self.board = BoardView(self)
-    self.add_subview(self.board)
+    self.area = AreaView(self)
+    self.add_subview(self.area)
+
+  def layout(self):
+    self.area.x = (self.width / 2) - (self.area.width / 2)
+    self.area.y = (self.height / 2) - (self.area.height / 2)
 
 
 if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
-  #root.present(style='fullscreen', orientations=['portrait'])
-  root.present()
+  root.present(style='fullscreen', orientations=['portrait'])
+  #root.present()
+
