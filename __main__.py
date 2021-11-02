@@ -1,5 +1,5 @@
 from pathlib import Path
-from math import pi
+from math import pi, sin, cos
 import ui
 
 BLACK = 0.24
@@ -171,6 +171,7 @@ class KifuReader:
       piece = teban_piece[1:]
     return piece
 
+  # xxx: 雑ゾーン
   def print_prompt(self, prompt_num) -> str:
     """
     header に手を表示
@@ -245,7 +246,7 @@ class Cell(ui.View):
     self.label.font = ('Source Code Pro', 16)
     self.label.flex = 'WH'
 
-    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 8)] * 2
+    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 6)] * 2
     self.add_subview(self.pos_x)
     self.add_subview(self.pos_y)
     self.add_subview(self.label)
@@ -254,10 +255,10 @@ class Cell(ui.View):
 
     # xxx: `color = args` とりあえず
     color = args[0]
-    self.pos_x.bg_color = self.pos_y.bg_color = color
+    #self.pos_x.bg_color = self.pos_y.bg_color = color
 
     pos_size = min(self.width, self.height) / 4
-    #self.pos_x.alpha, self.pos_y.alpha = [0.25] * 2
+    self.pos_x.alpha, self.pos_y.alpha = [0.25] * 2
     self.pos_x.width, self.pos_x.height = [pos_size] * 2
     self.pos_y.width, self.pos_y.height = [pos_size] * 2
     self.pos_y.x = self.width - self.pos_y.width
@@ -268,11 +269,43 @@ class Cell(ui.View):
 
   def draw(self):
     if self.text:
-      ui.set_color('blue')
-      line = ui.Path()
-      line.move_to(0, 0)
-      line.line_to(self.width, self.height)
-      line.stroke()
+      self.setup_piece()
+
+  def setup_piece(self):
+    ui.set_color('gold')
+    line = self.set_piece(self.width, self.height)
+    line.close()
+    line.fill()
+    ui.set_color(0)
+    line.stroke()
+
+  @staticmethod
+  def set_piece(width, height):
+    bottomline_length = height * 0.64  # * koma.bottom_aspect
+    top_degree = 146
+    bottom_degree = 81
+    aspect_ratio = 1.1  #koma.height_aspect
+    top_radian = top_degree * (pi / 180)
+    bottom_radian = bottom_degree * (pi / 180)
+    a = bottomline_length * (
+      aspect_ratio * cos(bottom_radian) -
+      (sin(bottom_radian) / 2)) / cos(bottom_radian + (top_radian / 2))
+
+    qx = a * sin(top_radian / 2)
+    qy = a * cos(top_radian / 2)
+    rx = bottomline_length / 2
+    ry = bottomline_length * aspect_ratio
+    center = (height - bottomline_length) / 4
+
+    _line = ui.Path()
+    _line.move_to(width / 2, center)
+    _line.line_to(qx + (width / 2), qy + center)
+    _line.line_to(rx + (width / 2), ry + center)
+    _line.line_to(-rx + (width / 2), ry + center)
+    _line.line_to(-qx + (width / 2), qy + center)
+
+    #return [0, 0, qx,qy, rx, ry]
+    return _line
 
   @property
   def text(self):
@@ -524,3 +557,4 @@ if __name__ == '__main__':
   root = RootView()
   #root.present(style='fullscreen', orientations=['portrait'])
   root.present()
+
