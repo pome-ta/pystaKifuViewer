@@ -1,44 +1,5 @@
 from pathlib import Path
-from math import pi, sin, cos
 import ui
-
-BLACK = 0.24
-RED = 'red'
-
-MATRIX = 9
-num_kan = {
-  1: '一',
-  2: '二',
-  3: '三',
-  4: '四',
-  5: '五',
-  6: '六',
-  7: '七',
-  8: '八',
-  9: '九'
-}
-
-KOMA = {
-  'OU': [['玉', '王'], BLACK],
-  'HI': ['飛', BLACK],
-  'KA': ['角', BLACK],
-  'KI': ['金', BLACK],
-  'GI': ['銀', BLACK],
-  'KE': ['桂', BLACK],
-  'KY': ['香', BLACK],
-  'FU': ['歩', BLACK],
-  'TO': ['と', RED],
-  'NY': ['杏', RED],
-  'NK': ['圭', RED],
-  'NG': ['全', RED],
-  'UM': ['馬', RED],
-  'RY': ['龍', RED]
-}
-
-TEBAN = {'+': '☖', '-': '☗'}
-
-SENTE_rad = ui.Transform.rotation(0)
-GOTE_rad = ui.Transform.rotation(pi)
 
 
 def load_kifu(path=0):
@@ -171,290 +132,37 @@ class KifuReader:
       piece = teban_piece[1:]
     return piece
 
-  # xxx: 雑ゾーン
-  def print_prompt(self, prompt_num) -> str:
-    """
-    header に手を表示
-    """
-    # xxx: View に持たせる？
-    instruction = self.prompter[prompt_num]
-    if len(instruction) == 1:
-      telop = '開始'
-      return '開始'
-    if '%' in instruction:
-      return f'{prompt_num:03d}手目: 終局'
-    teban = TEBAN[instruction[0]]
-    _b = instruction[1:3]
-    _a = instruction[3:5]
-    # xxx: 雑処理
-    # 手駒を盤面に出す
-    b = '打つ' if '00' in _b else f'{_b[0]}{num_kan[int(_b[1])]}'
-
-    a = f'{_a[0]}{num_kan[int(_a[1])]}'
-    p = KOMA[instruction[5:]][0]
-    if len(p) == 2:
-      if '+' in instruction:
-        p = p[0]
-      if '-' in instruction:
-        p = p[1]
-    telop = instruction
-    return f'{prompt_num:03d}手目: {teban}{a}{p}({b})'
-
-  def __print_board(self, turn):
-    # 盤面を`str` で返す
-    # テスト用
-    field = ''
-    field += f'{turn:03d}手目: {self.after}{self.piece_name}\n'
-
-    out_txt = f'後手手駒: {self.gote_hand}\n'
-    out_txt += '  9  8  7  6  5  4  3  2  1\n'
-    out_txt += '+---------------------------+\n'
-    kanji = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
-    for n, board in enumerate(self.game_board):
-      line = ' '
-      for piece in board:
-        if piece == '*':
-          piece = ' * '
-        line += piece
-      out_txt += line + f'\t{kanji[n]}\n'
-    out_txt += '+---------------------------+\n'
-    out_txt += f'先手手駒: {self.sente_hand}\n'
-
-    board = out_txt
-    field += board
-    print(field)
-
-
-# --- View
-
-#pentagon
-
-
-class Cell(ui.View):
-  def __init__(self, *args, **kwargs):
-    ui.View.__init__(self, *args, **kwargs)
-    self._text = ''
-    self.label = ui.Label()
-    self.pos_x = ui.Label()
-    self.pos_y = ui.Label()
-
-    self.label.alignment = ui.ALIGN_CENTER
-    self.pos_x.alignment = ui.ALIGN_CENTER
-    self.pos_y.alignment = ui.ALIGN_CENTER
-
-    self.label.text_color = 'black'
-    self.label.font = ('Source Code Pro', 16)
-    self.label.flex = 'WH'
-
-    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 6)] * 2
-    self.add_subview(self.pos_x)
-    self.add_subview(self.pos_y)
-    self.add_subview(self.label)
-
-  def set_label_pos(self, x, y, *args):
-
-    # xxx: `color = args` とりあえず
-    color = args[0]
-    #self.pos_x.bg_color = self.pos_y.bg_color = color
-
-    pos_size = min(self.width, self.height) / 4
-    self.pos_x.alpha, self.pos_y.alpha = [0.25] * 2
-    self.pos_x.width, self.pos_x.height = [pos_size] * 2
-    self.pos_y.width, self.pos_y.height = [pos_size] * 2
-    self.pos_y.x = self.width - self.pos_y.width
-    self.pos_y.y = self.height - self.pos_y.height
-
-    self.pos_x.text = f'{x}'
-    self.pos_y.text = f'{num_kan[y]}'
-
-  def draw(self):
-    if self.text:
-      self.setup_piece()
-
-  def setup_piece(self):
-    ui.set_color('gold')
-    line = self.set_piece(self.width, self.height)
-    line.close()
-    line.fill()
-    ui.set_color(0)
-    line.stroke()
-
-  @staticmethod
-  def set_piece(width, height):
-    bottomline_length = height * 0.64  # * koma.bottom_aspect
-    top_degree = 146
-    bottom_degree = 81
-    aspect_ratio = 1.1  #koma.height_aspect
-    top_radian = top_degree * (pi / 180)
-    bottom_radian = bottom_degree * (pi / 180)
-    a = bottomline_length * (
-      aspect_ratio * cos(bottom_radian) -
-      (sin(bottom_radian) / 2)) / cos(bottom_radian + (top_radian / 2))
-
-    qx = a * sin(top_radian / 2)
-    qy = a * cos(top_radian / 2)
-    rx = bottomline_length / 2
-    ry = bottomline_length * aspect_ratio
-    center = (height - bottomline_length) / 4
-
-    _line = ui.Path()
-    _line.move_to(width / 2, center)
-    _line.line_to(qx + (width / 2), qy + center)
-    _line.line_to(rx + (width / 2), ry + center)
-    _line.line_to(-rx + (width / 2), ry + center)
-    _line.line_to(-qx + (width / 2), qy + center)
-
-    #return [0, 0, qx,qy, rx, ry]
-    return _line
-
-  @property
-  def text(self):
-    self._text = self.label.text
-    return self._text
-
-  @text.setter
-  def text(self, txt):
-    self.label.text = txt
-    self._text = self.label.text
-
-
-class FieldMatrix(ui.View):
-  def __init__(self, *args, **kwargs):
-    ui.View.__init__(self, *args, **kwargs)
-    self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
-    [[self.add_subview(x) for x in y] for y in self.cells]
-
-    class Dot(ui.View):
-      def __init__(self, *args, **kwargs):
-        ui.View.__init__(self, *args, **kwargs)
-        self.bg_color = BLACK
-
-    self.dots = [[Dot() for dx in range(2)] for dy in range(2)]
-    [[self.add_subview(dx) for dx in dy] for dy in self.dots]
-
-  def move_cells(self, prompt):
-    for y in range(MATRIX):
-      for x in range(MATRIX):
-        _cell = self.cells[x][y]
-        _cell.bg_color = None
-    if len(prompt) == 1:
-      return
-    if '%' in prompt:
-      return
-
-    _a = prompt[3:5]
-    a_x, a_y = sujidan_to_index(_a)
-    self.cells[a_x][a_y].bg_color = 'peru'
-
-    _b = prompt[1:3]
-    if '00' in _b:
-      pass
-    else:
-      b_x, b_y = sujidan_to_index(_b)
-      self.cells[b_x][b_y].bg_color = 'khaki'
-
-  def setup_field(self, parent_size):
-    self.width = parent_size
-    self.height = parent_size
-
-    cell_size = parent_size / MATRIX
-    #print(cell_size)
-    x_pos = 0
-    y_pos = 0
-    for y in range(MATRIX):
-      for x in range(MATRIX):
-        _cell = self.cells[x][y]
-        _cell.width, _cell.height = [cell_size] * 2
-        _cell.x = x_pos
-        _cell.y = y_pos
-        _cell.set_label_pos((MATRIX - x), (y + 1), 'red')
-        y_pos += cell_size
-      y_pos = 0
-      x_pos += cell_size
-    self.set_dot()
-
-  def draw(self):
-    self.set_needs_display()
-    ui.set_color(BLACK)
-    out_side = ui.Path.rect(0.0, 0.0, self.width, self.height)
-    out_side.line_width = 2
-    out_side.stroke()
-
-    line = 0
-    div = min(self.width, self.height) / MATRIX
-    for m in range(MATRIX + 1):
-      line_path = ui.Path()
-      # x
-      line_path.move_to(0, line)
-      line_path.line_to(self.width, line)
-      # y
-      line_path.move_to(line, 0)
-      line_path.line_to(line, self.height)
-      line_path.line_width = 1 if (m % 3 == 0) else 0.5
-      line_path.stroke()
-      line += div
-
-  def set_dot(self):
-    size = self.width / 64
-    pos = self.width / 3
-    x_pos, y_pos = pos, pos
-    for dots in self.dots:
-      for dot in dots:
-        dot.width, dot.height = size, size
-        dot.corner_radius = size
-        dot.x = x_pos - (dot.width / 2)
-        dot.y = y_pos - (dot.height / 2)
-        x_pos += x_pos
-      x_pos = pos
-      y_pos += y_pos
-
-  def set_game(self, board):
-    for cells, clm in zip(self.cells, board):
-      for cell, piece in zip(cells, clm):
-        cell.text = ''
-        # xxx: `OU`, `GY` 処理をスマートにしたい
-        if '*' != piece:
-          if piece[1:] == 'OU':
-            _ou = KOMA[piece[1:]][0]
-            cell.label.text_color = KOMA[piece[1:]][1]
-            if piece[0] == '+':
-              cell.text = _ou[0]
-            if piece[0] == '-':
-              cell.text = _ou[1]
-          else:
-            cell.text = KOMA[piece[1:]][0]
-            cell.label.text_color = KOMA[piece[1:]][1]
-          if piece[0] == '+':
-            cell.label.transform = SENTE_rad
-          if piece[0] == '-':
-            cell.label.transform = GOTE_rad
-
-
-class StageView(ui.View):
-  def __init__(self, *args, **kwargs):
-    ui.View.__init__(self, *args, **kwargs)
-    self.bg_color = 'goldenrod'
-    self.field = FieldMatrix()
-    self.add_subview(self.field)
-
-  def setup_stage(self, parent_size):
-    self.width = parent_size
-    self.height = parent_size
-    min_size = parent_size / 32
-    # xxx: stage のsize により、変更
-    self.field.setup_field(parent_size - min_size)
-    self.field.x = (self.width / 2) - (self.field.width / 2)
-    self.field.y = (self.height / 2) - (self.field.height / 2)
-
-    #self.field.center = self.center
-
 
 class BoardView(ui.View):
   def __init__(self, parent, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    #self.bg_color = 'maroon'
     self.parent = parent
+    self.bg_color = 'maroon'
+    self.flex = 'WH'
+    self.init_setup()
 
+  def layout(self):
+    # xxx: 親呼ぶ
+    square_size = min(self.width, self.height)
+    margin_size = square_size * 0.2
+    w = self.width - margin_size
+    h = self.height - margin_size
+
+    # スライダー長さ確定
+    self.sl.width = w - (self.back_btn.width + self.forward_btn.width)
+    self.sl.height = min(self.back_btn.height, self.forward_btn.height)
+
+    # ボタン類位置左右振り
+    self.back_btn.x = 0
+    self.forward_btn.x = w - self.forward_btn.width
+    self.sl.x = self.back_btn.width
+
+  def init_setup(self):
+    self.setup_reader()
+    self.setup_slider()
+    self.setup_btns()
+
+  def setup_reader(self):
     self.game = KifuReader(load_kifu())
     self.max = len(self.game.prompter) - 1
     self.min = 1 / self.max
@@ -462,13 +170,7 @@ class BoardView(ui.View):
     # `slider` 数値用
     self.step_list = [n * self.min for n in range(self.max + 1)]
 
-    self.flex = 'WH'
-    self.stage = StageView()
-    self.add_subview(self.stage)
-
-    self.sente = ui.View()
-    self.gote = ui.View()
-
+  def setup_slider(self):
     self.sl = ui.Slider()
     self.sl.bg_color = 'darkgray'
     self.sl.flex = 'W'
@@ -476,37 +178,28 @@ class BoardView(ui.View):
     self.sl.continuous = False
     self.add_subview(self.sl)
 
+  def steps_slider(self, sender):
+    self.step = int(sender.value * self.max)
+    #self.update_game()
+
+  def setup_btns(self):
     self.back_btn = self.set_btn('iob:ios7_arrow_back_32', 0)
     self.forward_btn = self.set_btn('iob:ios7_arrow_forward_32', 1)
     self.add_subview(self.back_btn)
     self.add_subview(self.forward_btn)
 
-    # 盤面初期化
-    self.game.looper()
-    self.update_game()
-
-  def steps_slider(self, sender):
-    self.step = int(sender.value * self.max)
-    self.update_game()
-
-  def update_game(self):
-    self.game.looper(self.step)
-    self.stage.field.set_game(self.game.game_board)
-    self.stage.field.move_cells(self.game.prompter[self.step])
-    self.parent.name = self.game.print_prompt(self.step)
-
   def set_btn(self, img, back_forward):
     # forward: 1
     # back: 0
-    _icon = ui.Image.named(img)
-    _btn = ui.Button(title='')
-    _btn.width = 64
-    _btn.height = 128
-    _btn.bg_color = 'darkgray'
-    _btn.image = _icon
-    _btn.back_forward = back_forward
-    _btn.action = self.steps_btn
-    return _btn
+    icon = ui.Image.named(img)
+    btn = ui.Button(title='')
+    btn.width = 64
+    btn.height = 128
+    btn.bg_color = 'darkgray'
+    btn.image = icon
+    btn.back_forward = back_forward
+    btn.action = self.steps_btn
+    return btn
 
   def steps_btn(self, sender):
     if sender.back_forward:
@@ -516,32 +209,7 @@ class BoardView(ui.View):
       if self.step > 0:
         self.step -= 1
     self.sl.value = self.step_list[self.step]
-    self.update_game()
-
-  def layout(self):
-    w = self.width
-    h = self.height
-    square_size = min(w, h)
-
-    self.stage.setup_stage(square_size)
-    self.stage.field.set_game(self.game.game_board)
-
-    #self.stage.y = (square_size / 2) - (self.stage.height / 4)
-
-    self.back_btn.y, self.forward_btn.y = [
-      (self.stage.y + self.stage.height) * 1.024
-    ] * 2
-    self.forward_btn.x = w - self.forward_btn.width
-
-    self.sl.width = w - (self.back_btn.width + self.forward_btn.width)
-    self.sl.height = min(self.back_btn.height, self.forward_btn.height)
-    self.sl.center = self.center
-    self.sl.y = min(self.back_btn.y, self.forward_btn.y)
-    '''
-    self.sl.y = square_size + (self.height - square_size) / 2
-    self.back_btn.y = square_size + (self.height - square_size) / 2
-    self.forward_btn.y = square_size + (self.height - square_size) / 2
-    '''
+    #self.update_game()
 
 
 class RootView(ui.View):
@@ -557,4 +225,3 @@ if __name__ == '__main__':
   root = RootView()
   #root.present(style='fullscreen', orientations=['portrait'])
   root.present()
-
