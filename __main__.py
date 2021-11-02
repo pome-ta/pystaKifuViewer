@@ -82,7 +82,7 @@ class KifuReader:
     self.gote_hand: list = []  # `-` 後手保持手駒
     self.after: str = ''
     self.piece_name: str = ''
-    self.debug = debug #+ 1
+    self.debug = debug  #+ 1
 
     self.board_init, self.prompter = split_data(data)
     self.game_board = self.init_board()
@@ -265,6 +265,14 @@ class Cell(ui.View):
 
     self.pos_x.text = f'{x}'
     self.pos_y.text = f'{num_kan[y]}'
+
+  def draw(self):
+    if self.text:
+      ui.set_color('blue')
+      line = ui.Path()
+      line.move_to(0, 0)
+      line.line_to(self.width, self.height)
+      line.stroke()
 
   @property
   def text(self):
@@ -516,4 +524,3 @@ if __name__ == '__main__':
   root = RootView()
   #root.present(style='fullscreen', orientations=['portrait'])
   root.present()
-
