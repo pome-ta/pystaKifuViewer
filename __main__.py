@@ -82,7 +82,7 @@ class KifuReader:
     self.gote_hand: list = []  # `-` 後手保持手駒
     self.after: str = ''
     self.piece_name: str = ''
-    self.debug = debug  # + 1
+    self.debug = debug #+ 1
 
     self.board_init, self.prompter = split_data(data)
     self.game_board = self.init_board()
@@ -107,7 +107,7 @@ class KifuReader:
     # todo: 毎回初手から、指定(`turn`) 手目までを回す
     [self.__purser(loop) for loop in range(turn + 1)]
     # todo: `debug` の`bool` により判定
-    self.__print_board(turn) if self.debug else 0
+    self.__print_board(turn) if self.debug else None
 
   def __purser(self, num):
     instruction = self.prompter[num]
@@ -203,11 +203,7 @@ class KifuReader:
     # 盤面を`str` で返す
     # テスト用
     field = ''
-    # xxx: 要調査
-    after = self.after if self.after else 0
-    piece_name = self.piece_name if self.piece_name else ''
-
-    field += f'{turn:03d}手目: {after}{piece_name}\n'
+    field += f'{turn:03d}手目: {self.after}{self.piece_name}\n'
 
     out_txt = f'後手手駒: {self.gote_hand}\n'
     out_txt += '  9  8  7  6  5  4  3  2  1\n'
@@ -258,10 +254,10 @@ class Cell(ui.View):
 
     # xxx: `color = args` とりあえず
     color = args[0]
-    #self.pos_x.bg_color = self.pos_y.bg_color = color
+    self.pos_x.bg_color = self.pos_y.bg_color = color
 
     pos_size = min(self.width, self.height) / 4
-    self.pos_x.alpha, self.pos_y.alpha = [0.25] * 2
+    #self.pos_x.alpha, self.pos_y.alpha = [0.25] * 2
     self.pos_x.width, self.pos_x.height = [pos_size] * 2
     self.pos_y.width, self.pos_y.height = [pos_size] * 2
     self.pos_y.x = self.width - self.pos_y.width
@@ -296,8 +292,8 @@ class FieldMatrix(ui.View):
     [[self.add_subview(dx) for dx in dy] for dy in self.dots]
 
   def move_cells(self, prompt):
-    for x in range(MATRIX):
-      for y in range(MATRIX):
+    for y in range(MATRIX):
+      for x in range(MATRIX):
         _cell = self.cells[x][y]
         _cell.bg_color = None
     if len(prompt) == 1:
@@ -306,17 +302,15 @@ class FieldMatrix(ui.View):
       return
 
     _a = prompt[3:5]
-    a_x = MATRIX - int(_a[0])
-    a_y = int(_a[1]) - 1
-    self.cells[a_y][a_x].bg_color = 'peru'
+    a_x, a_y = sujidan_to_index(_a)
+    self.cells[a_x][a_y].bg_color = 'peru'
 
     _b = prompt[1:3]
     if '00' in _b:
       pass
     else:
-      b_x = MATRIX - int(_b[0])
-      b_y = int(_b[1]) - 1
-      self.cells[b_y][b_x].bg_color = 'khaki'
+      b_x, b_y = sujidan_to_index(_b)
+      self.cells[b_x][b_y].bg_color = 'khaki'
 
   def setup_field(self, parent_size):
     self.width = parent_size
@@ -326,16 +320,16 @@ class FieldMatrix(ui.View):
     #print(cell_size)
     x_pos = 0
     y_pos = 0
-    for x in range(MATRIX):
-      for y in range(MATRIX):
+    for y in range(MATRIX):
+      for x in range(MATRIX):
         _cell = self.cells[x][y]
         _cell.width, _cell.height = [cell_size] * 2
         _cell.x = x_pos
         _cell.y = y_pos
-        _cell.set_label_pos((MATRIX - y), (x + 1), 'red')
-        x_pos += cell_size
-      x_pos = 0
-      y_pos += cell_size
+        _cell.set_label_pos((MATRIX - x), (y + 1), 'red')
+        y_pos += cell_size
+      y_pos = 0
+      x_pos += cell_size
     self.set_dot()
 
   def draw(self):
@@ -522,3 +516,4 @@ if __name__ == '__main__':
   root = RootView()
   #root.present(style='fullscreen', orientations=['portrait'])
   root.present()
+
