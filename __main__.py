@@ -1,6 +1,11 @@
 from pathlib import Path
 import ui
 
+BLACK = 0.24
+RED = 'red'
+
+MATRIX = 9
+
 
 def load_kifu(path=0):
   # xxx: path の取り回し
@@ -21,7 +26,7 @@ def split_data(data):
   return board, prompt
 
 
-def sujidan_to_index(sujidan_str) -> [int, int]:
+def sujidan_to_index(sujidan_str) -> (int, int):
   suji_int = int(sujidan_str[0])
   dan_int = int(sujidan_str[1])
   x = dan_int - 1
@@ -43,7 +48,7 @@ class KifuReader:
     self.gote_hand: list = []  # `-` 後手保持手駒
     self.after: str = ''
     self.piece_name: str = ''
-    self.debug = debug  #+ 1
+    self.debug = debug  # 1
 
     self.board_init, self.prompter = split_data(data)
     self.game_board = self.init_board()
@@ -68,7 +73,7 @@ class KifuReader:
     # todo: 毎回初手から、指定(`turn`) 手目までを回す
     [self.__purser(loop) for loop in range(turn + 1)]
     # todo: `debug` の`bool` により判定
-    self.__print_board(turn) if self.debug else None
+    #self.__print_board(turn) if self.debug else None
 
   def __purser(self, num):
     instruction = self.prompter[num]
@@ -133,6 +138,43 @@ class KifuReader:
     return piece
 
 
+class FieldMatrix(ui.View):
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.bg_color = 'goldenrod'
+    self.border_color = BLACK
+    self.border_width = 1.5
+    self.u = ui.View()
+    self.u.bg_color = 'red'
+    self.add_subview(self.u)
+
+  def layout(self):
+    self.u.x = (self.width - self.u.width) / 2
+
+  def draw(self):
+    ui.set_color(BLACK)
+    line = 0
+    d_size = 6
+    div = min(self.width, self.height) / MATRIX
+    for m in range(MATRIX + 1):
+      line_path = ui.Path()
+      # x
+      line_path.move_to(0, line)
+      line_path.line_to(self.width, line)
+      # y
+      line_path.move_to(line, 0)
+      line_path.line_to(line, self.height)
+      line_path.line_width = 1 if (m % 3 == 0) else 0.5
+      line_path.stroke()
+      # dot
+      if (m % 3 == 0) and (0 < m < MATRIX):
+        ux = uy = line - (d_size / 2)
+        ui.Path.oval(ux, uy, d_size, d_size).fill()
+        bx = abs(ux - self.width + d_size)
+        ui.Path.oval(bx, uy, d_size, d_size).fill()
+      line += div
+
+
 class StageView(ui.View):
   """
   盤面と駒台
@@ -140,21 +182,27 @@ class StageView(ui.View):
 
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    self.bg_color = 'cyan'
-    self.ban = ui.View()
-    self.ban.bg_color = 'magenta'
-    self.add_subview(self.ban)
+    #self.bg_color = 'goldenrod'
+    self.field = FieldMatrix()
+    self.add_subview(self.field)
 
   def layout(self):
-    sq_size = min(self.width, self.height)
-    self.ban.width = sq_size
-    self.ban.height = sq_size
-    self.ban.center = self.center
+    w = self.width
+    h = self.height
+    sq_size = min(w, h)
+    self.field.width = sq_size
+    self.field.height = sq_size
+    self.field.x = (w - self.field.width) / 2
+    self.field.y = (h - self.field.height) / 2
 
   def draw(self):
-    ui.set_color(0)
+    # xxx: サイズ確認用
+    ui.set_color(BLACK)
     line = ui.Path()
+    line.line_width = 2
     line.move_to(0, 0)
+    line.line_to(self.width, 0)
+    line.line_to(0, self.height)
     line.line_to(self.width, self.height)
     line.stroke()
 
@@ -166,40 +214,43 @@ class AreaView(ui.View):
     self.parent = parent
     #self.bg_color = 'maroon'
     self.flex = 'WH'
-    self.parts_color = 'silver'
+    self.parts_color = 1  #'silver'
+    self.parts_size = 64
+
     self.init_setup()
     self.stage = StageView()
 
-    self.add_subview(self.sl)
-    self.add_subview(self.back_btn)
-    self.add_subview(self.forward_btn)
+    self.btm = ui.View()
+    self.btm.flex = 'W'
+    self.btm.bg_color = self.parts_color
+
+    self.btm.add_subview(self.sl)
+    self.btm.add_subview(self.back_btn)
+    self.btm.add_subview(self.forward_btn)
+    self.add_subview(self.btm)
     self.add_subview(self.stage)
 
   def layout(self):
-    min_parent = min(self.parent.width, self.parent.height)
-    margin_size = min_parent * 0.064
-
-    w = self.width = self.parent.width - margin_size
-    h = self.height = self.parent.height - margin_size
+    w = self.width
+    h = self.height
     square_size = min(w, h)
-
-    # スライダー長さ確定
-    self.sl.width = w - (self.back_btn.width + self.forward_btn.width)
-    self.sl.height = min(self.back_btn.height, self.forward_btn.height)
-    # ボタン類位置左右振り
-    self.back_btn.x = 0
-    self.forward_btn.x = w - self.forward_btn.width
-    # スライダーをセンターに
+    margin_size = square_size * 0.064
+    # btm set
+    self.btm.height = self.parent.frame[1] * 1.024
+    self.btm.width = w
+    self.btm.x = (w - self.btm.width) / 2
+    self.btm.y = h - self.btm.height
+    # slider
+    self.sl.width = w - (self.parts_size * 2)
     self.sl.x = (w - self.sl.width) / 2
-    # ボタンとスライダーを一気に移動
-    _parts_max = max(self.back_btn.height, self.forward_btn.height)
-    _y = self.height - _parts_max - (margin_size / 2)
-    self.back_btn.y, self.sl.y, self.forward_btn.y = [_y] * 3
-
-    self.stage.width = w
-    self.stage.height = _y - (margin_size / 2)
-    self.stage.x = (w / 2) - (self.stage.width / 2)
-    #self.stage.y = margin_size / 2
+    # Buttons
+    self.back_btn.x = 0
+    self.forward_btn.x = w - self.parts_size
+    # stage
+    self.stage.width = w - (margin_size / 2)
+    self.stage.height = h - self.btm.height - (margin_size / 2)
+    self.stage.x = (w - self.stage.width) / 2
+    self.stage.y = margin_size / 4
 
   def init_setup(self):
     self.setup_reader()
@@ -216,6 +267,7 @@ class AreaView(ui.View):
 
   def setup_slider(self):
     self.sl = ui.Slider()
+    self.sl.height = self.parts_size
     self.sl.bg_color = self.parts_color
     self.sl.flex = 'W'
     self.sl.action = self.steps_slider
@@ -226,18 +278,18 @@ class AreaView(ui.View):
     #self.update_game()
 
   def setup_btns(self):
-    self.back_btn = self.set_btn('iob:ios7_arrow_back_32', 0)
-    self.forward_btn = self.set_btn('iob:ios7_arrow_forward_32', 1)
+    self.back_btn = self.set_btn('iob:ios7_arrow_left_32', 0)
+    self.forward_btn = self.set_btn('iob:ios7_arrow_right_32', 1)
 
   def set_btn(self, img, back_forward):
     # forward: 1, back: 0
     icon = ui.Image.named(img)
     btn = ui.Button(title='')
-    btn.width = 64
-    btn.height = 128
+    btn.back_forward = back_forward
+    btn.width = self.parts_size
+    btn.height = self.parts_size
     btn.bg_color = self.parts_color
     btn.image = icon
-    btn.back_forward = back_forward
     btn.action = self.steps_btn
     return btn
 
@@ -256,12 +308,9 @@ class RootView(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 'slategray'
+    #self.bg_color = 'goldenrod'
     self.area = AreaView(self)
     self.add_subview(self.area)
-
-  def layout(self):
-    self.area.x = (self.width - self.area.width) / 2
-    self.area.y = (self.height - self.area.height) / 2
 
 
 if __name__ == '__main__':
