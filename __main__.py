@@ -145,6 +145,12 @@ class StageView(ui.View):
     self.ban.bg_color = 'magenta'
     self.add_subview(self.ban)
 
+  def layout(self):
+    sq_size = min(self.width, self.height)
+    self.ban.width = sq_size
+    self.ban.height = sq_size
+    self.ban.center = self.center
+
   def draw(self):
     ui.set_color(0)
     line = ui.Path()
@@ -184,7 +190,7 @@ class AreaView(ui.View):
     self.back_btn.x = 0
     self.forward_btn.x = w - self.forward_btn.width
     # スライダーをセンターに
-    self.sl.x = (w / 2) - (self.sl.width / 2)
+    self.sl.x = (w - self.sl.width) / 2
     # ボタンとスライダーを一気に移動
     _parts_max = max(self.back_btn.height, self.forward_btn.height)
     _y = self.height - _parts_max - (margin_size / 2)
@@ -254,8 +260,8 @@ class RootView(ui.View):
     self.add_subview(self.area)
 
   def layout(self):
-    self.area.x = (self.width / 2) - (self.area.width / 2)
-    self.area.y = (self.height / 2) - (self.area.height / 2)
+    self.area.x = (self.width - self.area.width) / 2
+    self.area.y = (self.height - self.area.height) / 2
 
 
 if __name__ == '__main__':
