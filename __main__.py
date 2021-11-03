@@ -138,41 +138,56 @@ class KifuReader:
     return piece
 
 
+class Cell(ui.View):
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.pos_x = ui.Label()
+    self.pos_y = ui.Label()
+    self.pos_x.alignment = ui.ALIGN_CENTER
+    self.pos_y.alignment = ui.ALIGN_CENTER
+    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 6)] * 2
+    self.add_subview(self.pos_x)
+    self.add_subview(self.pos_y)
+
+
 class FieldMatrix(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 'goldenrod'
     self.border_color = BLACK
     self.border_width = 1.5
-    self.u = ui.View()
-    self.u.bg_color = 'red'
-    self.add_subview(self.u)
 
   def layout(self):
-    self.u.x = (self.width - self.u.width) / 2
+    pass
 
   def draw(self):
     ui.set_color(BLACK)
-    line = 0
+    x_line = 0
+    y_line = 0
     d_size = 6
-    div = min(self.width, self.height) / MATRIX
-    for m in range(MATRIX + 1):
+    x_div = self.width / MATRIX
+    y_div = self.height / MATRIX
+    for m in range(MATRIX):
       line_path = ui.Path()
       # x
-      line_path.move_to(0, line)
-      line_path.line_to(self.width, line)
+      line_path.move_to(0, y_line)
+      line_path.line_to(self.width, y_line)
       # y
-      line_path.move_to(line, 0)
-      line_path.line_to(line, self.height)
+      line_path.move_to(x_line, 0)
+      line_path.line_to(x_line, self.height)
       line_path.line_width = 1 if (m % 3 == 0) else 0.5
       line_path.stroke()
       # dot
+
       if (m % 3 == 0) and (0 < m < MATRIX):
-        ux = uy = line - (d_size / 2)
+        ux = x_line - (d_size / 2)
+        uy = y_line - (d_size / 2)
         ui.Path.oval(ux, uy, d_size, d_size).fill()
         bx = abs(ux - self.width + d_size)
         ui.Path.oval(bx, uy, d_size, d_size).fill()
-      line += div
+
+      x_line += x_div
+      y_line += y_div
 
 
 class StageView(ui.View):
@@ -191,7 +206,7 @@ class StageView(ui.View):
     h = self.height
     sq_size = min(w, h)
     self.field.width = sq_size
-    self.field.height = sq_size
+    self.field.height = sq_size * (34.8 / 31.7)
     self.field.x = (w - self.field.width) / 2
     self.field.y = (h - self.field.height) / 2
 
@@ -318,4 +333,3 @@ if __name__ == '__main__':
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
   #root.present()
-
