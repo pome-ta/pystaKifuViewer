@@ -38,7 +38,7 @@ def split_data(data):
   return board, prompt
 
 
-# todo: 段=x, 筋=y
+# todo: 段=x 漢字, 筋=y 英数字
 def sujidan_to_index(sujidan_str) -> (int, int):
   suji_int = int(sujidan_str[0])
   dan_int = int(sujidan_str[1])
@@ -47,10 +47,11 @@ def sujidan_to_index(sujidan_str) -> (int, int):
   return x, y
 
 
-def index_to_sujidan(x: int, y: int) -> (str, str):
+def index_to_dansuji(x: int, y: int) -> (str, str):
+  # xxx: 反転？🤔
   suji_str = str(MATRIX - x)
-  dan_str = NUMtoKAN[MATRIX - y]  #str(1 + y)
-  return dan_str, suji_str
+  dan_str = NUMtoKAN[y + 1]
+  return suji_str, dan_str
 
 
 class KifuReader:
@@ -174,7 +175,7 @@ class Cell(ui.View):
     self.pos_y.x = self.width - self.pos_y.width
     self.pos_y.y = self.height - self.pos_y.height
 
-    self.pos_x.text, self.pos_y.text = index_to_sujidan(x, y)
+    self.pos_x.text, self.pos_y.text = index_to_dansuji(x, y)
 
 
 class FieldMatrix(ui.View):
@@ -218,7 +219,7 @@ class FieldMatrix(ui.View):
     ui.set_color(BLACK)
     x_line = 0
     y_line = 0
-    d_size = 6
+    d_size = 4
     x_div = self.width / MATRIX
     y_div = self.height / MATRIX
     for m in range(MATRIX):
@@ -385,4 +386,3 @@ if __name__ == '__main__':
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
   #root.present()
-
