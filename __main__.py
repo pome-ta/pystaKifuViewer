@@ -6,6 +6,18 @@ RED = 'red'
 
 MATRIX = 9
 
+NUMtoKAN = {
+  1: '一',
+  2: '二',
+  3: '三',
+  4: '四',
+  5: '五',
+  6: '六',
+  7: '七',
+  8: '八',
+  9: '九'
+}
+
 
 def load_kifu(path=0):
   # xxx: path の取り回し
@@ -26,16 +38,19 @@ def split_data(data):
   return board, prompt
 
 
+# todo: 段=x, 筋=y
 def sujidan_to_index(sujidan_str) -> (int, int):
   suji_int = int(sujidan_str[0])
   dan_int = int(sujidan_str[1])
   x = dan_int - 1
-  y = 9 - suji_int
+  y = MATRIX - suji_int
   return x, y
 
 
-def index_to_sujidan():
-  pass
+def index_to_sujidan(x: int, y: int) -> (str, str):
+  suji_str = str(MATRIX - x)
+  dan_str = NUMtoKAN[MATRIX - y]  #str(1 + y)
+  return dan_str, suji_str
 
 
 class KifuReader:
@@ -141,26 +156,65 @@ class KifuReader:
 class Cell(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
+    #self.bg_color = 'magenta'
     self.pos_x = ui.Label()
     self.pos_y = ui.Label()
     self.pos_x.alignment = ui.ALIGN_CENTER
     self.pos_y.alignment = ui.ALIGN_CENTER
-    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 6)] * 2
+    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 8)] * 2
     self.add_subview(self.pos_x)
     self.add_subview(self.pos_y)
 
+  def set_label_pos(self, x, y):
+    x_pos = self.width / 4
+    y_pos = self.height / 4
+    #self.pos_x.bg_color, self.pos_y.bg_color = ['cyan'] * 2
+    self.pos_x.width, self.pos_y.width = [x_pos] * 2
+    self.pos_x.height, self.pos_y.height = [y_pos] * 2
+    self.pos_y.x = self.width - self.pos_y.width
+    self.pos_y.y = self.height - self.pos_y.height
+
+    self.pos_x.text, self.pos_y.text = index_to_sujidan(x, y)
+
 
 class FieldMatrix(ui.View):
+  """
+  盤面そのもの
+  """
+
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 'goldenrod'
     self.border_color = BLACK
     self.border_width = 1.5
 
+    self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
+    [[self.add_subview(x) for x in y] for y in self.cells]
+
   def layout(self):
-    pass
+    w = self.width
+    h = self.height
+    self.setup_cells(w, h)
+
+  def setup_cells(self, width, height):
+    w = width / MATRIX
+    h = height / MATRIX
+    x_pos = 0
+    y_pos = 0
+    for y in range(MATRIX):
+      for x in range(MATRIX):
+        cell = self.cells[x][y]
+        cell.width, cell.height = [w, h]
+        cell.x, cell.y = [x_pos, y_pos]
+        cell.set_label_pos(x, y)
+        x_pos += w
+      x_pos = 0
+      y_pos += h
 
   def draw(self):
+    """
+    盤の線を引く、点を打つ
+    """
     ui.set_color(BLACK)
     x_line = 0
     y_line = 0
@@ -178,14 +232,12 @@ class FieldMatrix(ui.View):
       line_path.line_width = 1 if (m % 3 == 0) else 0.5
       line_path.stroke()
       # dot
-
       if (m % 3 == 0) and (0 < m < MATRIX):
         ux = x_line - (d_size / 2)
         uy = y_line - (d_size / 2)
         ui.Path.oval(ux, uy, d_size, d_size).fill()
         bx = abs(ux - self.width + d_size)
         ui.Path.oval(bx, uy, d_size, d_size).fill()
-
       x_line += x_div
       y_line += y_div
 
@@ -333,3 +385,4 @@ if __name__ == '__main__':
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
   #root.present()
+
