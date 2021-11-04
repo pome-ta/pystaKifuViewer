@@ -1,3 +1,4 @@
+from math import sin, cos, pi
 from pathlib import Path
 import ui
 
@@ -88,7 +89,7 @@ class KifuReader:
     # todo: 毎回初手から、指定(`turn`) 手目までを回す
     [self.__purser(loop) for loop in range(turn + 1)]
     # todo: `debug` の`bool` により判定
-    self.__print_board() if self.debug else None
+    print(self.__print_board()) if self.debug else None
 
   def __purser(self, num):
     instruction = self.prompter[num]
@@ -136,6 +137,7 @@ class KifuReader:
 
   @staticmethod
   def __convert_piece(teban_piece):
+    # xxx: いつかは、class か何かに統合
     if 'TO' in teban_piece:
       piece = 'FU'
     elif 'NY' in teban_piece:
@@ -168,13 +170,65 @@ class KifuReader:
       out_txt += line + f'\t{kanji[n]}\n'
     out_txt += '+---------------------------+\n'
     out_txt += f'先手手駒: {self.sente_hand}\n'
-    print(out_txt)
+    #print(out_txt)
     return out_txt
 
 
 class Piece(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
+    #self.bg_color = 'magenta'
+    #self.flex = 'WH'
+    #self.border_color = BLACK
+    #self.border_width = 1
+    self.name_label = ui.Label()
+    self.name_label.flex = 'WH'
+    self.name_label.alignment = ui.ALIGN_CENTER
+    self.name_label.font = ('Source Code Pro', 16)
+    self.name_label.text_color = BLACK
+    #self.name_label.text = 'あ'
+    self.add_subview(self.name_label)
+
+  def make_up(self):
+    pass
+
+  def draw(self):
+    self.set_needs_display()
+    if self.name_label.text != '*':
+      ui.set_color('gold')
+      line = self.set_piece(self.width, self.height)
+      line.close()
+      line.fill()
+      ui.set_color(0)
+      line.stroke()
+
+  @staticmethod
+  def set_piece(width, height):
+    bottomline_length = height * 0.88  # * koma.bottom_aspect
+    top_degree = 146
+    bottom_degree = 81
+    aspect_ratio = 1  #koma.height_aspect
+    top_radian = top_degree * (pi / 180)
+    bottom_radian = bottom_degree * (pi / 180)
+    a = bottomline_length * (
+      aspect_ratio * cos(bottom_radian) -
+      (sin(bottom_radian) / 2)) / cos(bottom_radian + (top_radian / 2))
+
+    qx = a * sin(top_radian / 2)
+    qy = a * cos(top_radian / 2)
+    rx = bottomline_length / 2
+    ry = bottomline_length * aspect_ratio
+    center = (height - bottomline_length) / 4
+
+    vec = ui.Path()
+    vec.move_to(width / 2, center)
+    vec.line_to(qx + (width / 2), qy + center)
+    vec.line_to(rx + (width / 2), ry + center)
+    vec.line_to(-rx + (width / 2), ry + center)
+    vec.line_to(-qx + (width / 2), qy + center)
+
+    #return [0, 0, qx,qy, rx, ry]
+    return vec
 
 
 class Cell(ui.View):
@@ -185,22 +239,17 @@ class Cell(ui.View):
     self.pos_y = ui.Label()
     self.pos_x.alignment = ui.ALIGN_CENTER
     self.pos_y.alignment = ui.ALIGN_CENTER
-    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 8)] * 2
+    self.pos_x.font, self.pos_y.font = [('Source Code Pro', 10)] * 2
     self.add_subview(self.pos_x)
     self.add_subview(self.pos_y)
 
-    self.koma = ui.Label()
-    self.koma.alignment = ui.ALIGN_CENTER
-    self.koma.font = ('Source Code Pro', 16)
-    #self.koma.bg_color = 'magenta'
-    self.koma.border_color = BLACK
-    self.koma.border_width = 1
+    self.koma = Piece()
     self.add_subview(self.koma)
 
   def setup_koma(self, _x, _y):
     _w, _h = self.__set_label_pos(_x, _y)
-    w = self.width - (_w * 1.28)
-    h = self.height - (_h * 1.28)
+    w = self.width - (_w * 1.024)
+    h = self.height - (_h * 1.024)
     self.koma.width, self.koma.height = [w, h]
     self.koma.x = (self.width - self.koma.width) / 2
     self.koma.y = (self.height - self.koma.height) / 2
@@ -229,13 +278,21 @@ class FieldMatrix(ui.View):
     self.border_color = BLACK
     self.border_width = 1.5
 
+    self.sent_rad = ui.Transform.rotation(0)
+    self.gote_rad = ui.Transform.rotation(pi)
+
     self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
     [[self.add_subview(x) for x in y] for y in self.cells]
 
   def update_field(self, board_Lists):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
-        cell.koma.text = koma
+        if '+' in koma:
+          cell.koma.transform = self.sent_rad
+        if '-' in koma:
+          cell.koma.transform = self.gote_rad
+        cell.koma.name_label.text = koma
+        cell.koma.draw()
 
   def layout(self):
     w = self.width
@@ -305,12 +362,13 @@ class StageView(ui.View):
     h = self.height
     sq_size = min(w, h)
     self.field.width = sq_size
+    # https://sizea.jp/shogi-size/
     self.field.height = sq_size * (34.8 / 31.7)
     self.field.x = (w - self.field.width) / 2
     self.field.y = (h - self.field.height) / 2
 
   def draw(self):
-    # xxx: サイズ確認用
+    # xxx: サイズ確認用（Zのやつ）
     ui.set_color(BLACK)
     line = ui.Path()
     line.line_width = 2
@@ -330,23 +388,14 @@ class AreaView(ui.View):
     self.flex = 'WH'
     self.parts_color = 1  #'silver'
     self.parts_size = 64
-
-    self.init_setup()
+    self.data = load_kifu()
+    self.game = KifuReader(self.data, debug=0)
     self.stage = StageView()
-
-    self.btm = ui.View()
-    self.btm.flex = 'W'
-    self.btm.bg_color = self.parts_color
-
-    self.btm.add_subview(self.sl)
-    self.btm.add_subview(self.back_btn)
-    self.btm.add_subview(self.forward_btn)
-    self.add_subview(self.btm)
-    self.add_subview(self.stage)
-    self.update_game()
+    self.init_setup()
 
   def update_game(self):
     self.game.looper(self.step)
+    # xxx: こんなに深く呼び出していいもの？
     self.stage.field.update_field(self.game.game_board)
 
   def layout(self):
@@ -372,12 +421,22 @@ class AreaView(ui.View):
     self.stage.y = margin_size / 4
 
   def init_setup(self):
+    self.btm = ui.View()
+    self.btm.flex = 'W'
+    self.btm.bg_color = self.parts_color
+
     self.setup_reader()
     self.setup_slider()
     self.setup_btns()
 
+    self.btm.add_subview(self.sl)
+    self.btm.add_subview(self.back_btn)
+    self.btm.add_subview(self.forward_btn)
+    self.add_subview(self.btm)
+    self.add_subview(self.stage)
+    self.update_game()
+
   def setup_reader(self):
-    self.game = KifuReader(load_kifu(), debug=0)
     self.max = len(self.game.prompter) - 1
     self.min = 1 / self.max
     self.step = 0
