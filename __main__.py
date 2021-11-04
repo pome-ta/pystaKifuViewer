@@ -48,9 +48,8 @@ def sujidan_to_index(sujidan_str) -> (int, int):
 
 
 def index_to_dansuji(x: int, y: int) -> (str, str):
-  # xxx: 反転？🤔
-  suji_str = str(MATRIX - x)
-  dan_str = NUMtoKAN[y + 1]
+  suji_str = str(MATRIX - y)
+  dan_str = NUMtoKAN[x + 1]
   return suji_str, dan_str
 
 
@@ -89,7 +88,7 @@ class KifuReader:
     # todo: 毎回初手から、指定(`turn`) 手目までを回す
     [self.__purser(loop) for loop in range(turn + 1)]
     # todo: `debug` の`bool` により判定
-    #self.__print_board(turn) if self.debug else None
+    self.__print_board() if self.debug else None
 
   def __purser(self, num):
     instruction = self.prompter[num]
@@ -153,6 +152,30 @@ class KifuReader:
       piece = teban_piece[1:]
     return piece
 
+  def __print_board(self):
+    # 盤面を`str` で返す
+    # テスト用
+    out_txt = f'後手手駒: {self.gote_hand}\n'
+    out_txt += '  9  8  7  6  5  4  3  2  1\n'
+    out_txt += '+---------------------------+\n'
+    kanji = ['一', '二', '三', '四', '五', '六', '七', '八', '九']
+    for n, board in enumerate(self.game_board):
+      line = ' '
+      for piece in board:
+        if piece == '*':
+          piece = ' * '
+        line += piece
+      out_txt += line + f'\t{kanji[n]}\n'
+    out_txt += '+---------------------------+\n'
+    out_txt += f'先手手駒: {self.sente_hand}\n'
+    print(out_txt)
+    return out_txt
+
+
+class Piece(ui.View):
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+
 
 class Cell(ui.View):
   def __init__(self, *args, **kwargs):
@@ -209,6 +232,11 @@ class FieldMatrix(ui.View):
     self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
     [[self.add_subview(x) for x in y] for y in self.cells]
 
+  def update_field(self, board_Lists):
+    for cells, boards in zip(self.cells, board_Lists):
+      for cell, koma in zip(cells, boards):
+        cell.koma.text = koma
+
   def layout(self):
     w = self.width
     h = self.height
@@ -219,15 +247,16 @@ class FieldMatrix(ui.View):
     h = height / MATRIX
     x_pos = 0
     y_pos = 0
-    for y in range(MATRIX):
-      for x in range(MATRIX):
-        cell = self.cells[x][y]
+    # todo: 段=x 漢字, 筋=y 英数字
+    for dan in range(MATRIX):
+      for suji in range(MATRIX):
+        cell = self.cells[suji][dan]
         cell.width, cell.height = [w, h]
         cell.x, cell.y = [x_pos, y_pos]
-        cell.setup_koma(x, y)
-        x_pos += w
-      x_pos = 0
-      y_pos += h
+        cell.setup_koma(suji, dan)
+        y_pos += h
+      y_pos = 0
+      x_pos += w
 
   def draw(self):
     """
@@ -314,6 +343,11 @@ class AreaView(ui.View):
     self.btm.add_subview(self.forward_btn)
     self.add_subview(self.btm)
     self.add_subview(self.stage)
+    self.update_game()
+
+  def update_game(self):
+    self.game.looper(self.step)
+    self.stage.field.update_field(self.game.game_board)
 
   def layout(self):
     w = self.width
@@ -343,7 +377,7 @@ class AreaView(ui.View):
     self.setup_btns()
 
   def setup_reader(self):
-    self.game = KifuReader(load_kifu())
+    self.game = KifuReader(load_kifu(), debug=0)
     self.max = len(self.game.prompter) - 1
     self.min = 1 / self.max
     self.step = 0
@@ -360,7 +394,7 @@ class AreaView(ui.View):
 
   def steps_slider(self, sender):
     self.step = int(sender.value * self.max)
-    #self.update_game()
+    self.update_game()
 
   def setup_btns(self):
     self.back_btn = self.set_btn('iob:ios7_arrow_left_32', 0)
@@ -386,7 +420,7 @@ class AreaView(ui.View):
       if self.step > 0:
         self.step -= 1
     self.sl.value = self.step_list[self.step]
-    #self.update_game()
+    self.update_game()
 
 
 class RootView(ui.View):
@@ -402,4 +436,3 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
- 
