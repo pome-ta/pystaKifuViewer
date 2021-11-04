@@ -19,6 +19,50 @@ NUMtoKAN = {
   9: '九'
 }
 
+# --- komas size
+H1 = {'center_height': 32.5, 'bottom_width': 29.3}  # OU
+H2 = {'center_height': 31.5, 'bottom_width': 28.3}  # HI
+H3 = {'center_height': 30.5, 'bottom_width': 27.3}  # KI
+H4 = {'center_height': 29.5, 'bottom_width': 26.3}  # KE
+H5 = {'center_height': 29.5, 'bottom_width': 24.1}  # KY
+H6 = {'center_height': 28.3, 'bottom_width': 23.1}  # FU
+
+# --- komas attribute
+OU = {'face': '王', 'size': H1, 'color': BLACK, 'back': None}
+GY = {'face': '玉', 'size': H1, 'color': BLACK, 'back': None}
+HI = {'face': '飛', 'size': H2, 'color': BLACK, 'back': None}
+KA = {'face': '角', 'size': H2, 'color': BLACK, 'back': None}
+KI = {'face': '金', 'size': H3, 'color': BLACK, 'back': None}
+GI = {'face': '銀', 'size': H3, 'color': BLACK, 'back': None}
+KE = {'face': '桂', 'size': H4, 'color': BLACK, 'back': None}
+KY = {'face': '香', 'size': H5, 'color': BLACK, 'back': None}
+FU = {'face': '歩', 'size': H6, 'color': BLACK, 'back': None}
+
+TO = {'face': 'と', 'size': H6, 'color': RED, 'back': FU['face']}
+NY = {'face': '杏', 'size': H5, 'color': RED, 'back': KY['face']}
+NK = {'face': '圭', 'size': H4, 'color': RED, 'back': KE['face']}
+NG = {'face': '全', 'size': H3, 'color': RED, 'back': GI['face']}
+UM = {'face': '馬', 'size': H2, 'color': RED, 'back': KA['face']}
+RY = {'face': '龍', 'size': H2, 'color': RED, 'back': HI['face']}
+
+CATALOG = {
+  'OU': OU,
+  'GY': GY,
+  'HI': HI,
+  'KA': KA,
+  'KI': KI,
+  'GI': GI,
+  'KE': KE,
+  'KY': KY,
+  'FU': FU,
+  'TO': TO,
+  'NY': NY,
+  'NK': NK,
+  'NG': NG,
+  'UM': UM,
+  'RY': RY
+}
+
 
 def load_kifu(path=0):
   # xxx: path の取り回し
@@ -138,6 +182,7 @@ class KifuReader:
   @staticmethod
   def __convert_piece(teban_piece):
     # xxx: いつかは、class か何かに統合
+    print(CATALOG[teban_piece[1:]])
     if 'TO' in teban_piece:
       piece = 'FU'
     elif 'NY' in teban_piece:
@@ -186,28 +231,45 @@ class Piece(ui.View):
     self.name_label.alignment = ui.ALIGN_CENTER
     self.name_label.font = ('Source Code Pro', 16)
     self.name_label.text_color = BLACK
-    #self.name_label.text = 'あ'
+    self.name_label.text = ''
     self.add_subview(self.name_label)
 
-  def make_up(self):
-    pass
+  def make_up(self, teban_piece):
+    if len(teban_piece) == 1:
+      self.name_label.text = ''
+      return
+    # なんとなく後手を`玉`
+    teban_piece = '-GY' if '-OU' in teban_piece else teban_piece
+
+    piece = CATALOG[teban_piece[1:]]
+
+    h = piece['size']['center_height']
+    l = piece['size']['bottom_width']
+    self.face = piece['face']
+    self.height_aspect = h / l
+    self.bottom_aspect = l / 29.3
+    self.name_label.text = self.face
+    self.name_label.text_color = piece['color']
 
   def draw(self):
     self.set_needs_display()
-    if self.name_label.text != '*':
-      ui.set_color('gold')
-      line = self.set_piece(self.width, self.height)
-      line.close()
-      line.fill()
-      ui.set_color(0)
-      line.stroke()
+    if self.name_label.text == '*' or self.name_label.text == '':
+      return
+    ui.set_color('gold')
+    line = self.set_piece(self.width, self.height)
+    line.close()
+    line.fill()
+    ui.set_color(BLACK)
+    line.stroke()
 
-  @staticmethod
-  def set_piece(width, height):
-    bottomline_length = height * 0.88  # * koma.bottom_aspect
+  def set_piece(self, width, height):
+    # https://ameblo.jp/bane-0604/entry-12687852122.html
+    # https://rskmoi.hatenablog.com/entry/2018/01/21/104029
+
+    bottomline_length = height * 0.8 * self.bottom_aspect
     top_degree = 146
     bottom_degree = 81
-    aspect_ratio = 1  #koma.height_aspect
+    aspect_ratio = self.height_aspect
     top_radian = top_degree * (pi / 180)
     bottom_radian = bottom_degree * (pi / 180)
     a = bottomline_length * (
@@ -220,15 +282,15 @@ class Piece(ui.View):
     ry = bottomline_length * aspect_ratio
     center = (height - bottomline_length) / 4
 
-    vec = ui.Path()
-    vec.move_to(width / 2, center)
-    vec.line_to(qx + (width / 2), qy + center)
-    vec.line_to(rx + (width / 2), ry + center)
-    vec.line_to(-rx + (width / 2), ry + center)
-    vec.line_to(-qx + (width / 2), qy + center)
+    vector = ui.Path()
+    vector.move_to(width / 2, center)
+    vector.line_to(qx + (width / 2), qy + center)
+    vector.line_to(rx + (width / 2), ry + center)
+    vector.line_to(-rx + (width / 2), ry + center)
+    vector.line_to(-qx + (width / 2), qy + center)
 
     #return [0, 0, qx,qy, rx, ry]
-    return vec
+    return vector
 
 
 class Cell(ui.View):
@@ -258,6 +320,7 @@ class Cell(ui.View):
     x_pos = self.width / 4
     y_pos = self.height / 4
     #self.pos_x.bg_color, self.pos_y.bg_color = ['cyan'] * 2
+    self.pos_x.alpha, self.pos_y.alpha = [0.5] * 2
     self.pos_x.text_color, self.pos_y.text_color = [BLACK] * 2
     self.pos_x.width, self.pos_y.width = [x_pos] * 2
     self.pos_x.height, self.pos_y.height = [y_pos] * 2
@@ -287,11 +350,13 @@ class FieldMatrix(ui.View):
   def update_field(self, board_Lists):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
+        cell.koma.make_up(koma)
+
         if '+' in koma:
           cell.koma.transform = self.sent_rad
         if '-' in koma:
           cell.koma.transform = self.gote_rad
-        cell.koma.name_label.text = koma
+        #cell.koma.name_label.text = koma
         cell.koma.draw()
 
   def layout(self):
