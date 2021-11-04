@@ -27,40 +27,97 @@ H4 = {'center_height': 29.5, 'bottom_width': 26.3}  # KE
 H5 = {'center_height': 29.5, 'bottom_width': 24.1}  # KY
 H6 = {'center_height': 28.3, 'bottom_width': 23.1}  # FU
 
-# --- komas attribute
-OU = {'face': '王', 'size': H1, 'color': BLACK, 'back': None}
-GY = {'face': '玉', 'size': H1, 'color': BLACK, 'back': None}
-HI = {'face': '飛', 'size': H2, 'color': BLACK, 'back': None}
-KA = {'face': '角', 'size': H2, 'color': BLACK, 'back': None}
-KI = {'face': '金', 'size': H3, 'color': BLACK, 'back': None}
-GI = {'face': '銀', 'size': H3, 'color': BLACK, 'back': None}
-KE = {'face': '桂', 'size': H4, 'color': BLACK, 'back': None}
-KY = {'face': '香', 'size': H5, 'color': BLACK, 'back': None}
-FU = {'face': '歩', 'size': H6, 'color': BLACK, 'back': None}
-
-TO = {'face': 'と', 'size': H6, 'color': RED, 'back': 'FU'}
-NY = {'face': '杏', 'size': H5, 'color': RED, 'back': 'KY'}
-NK = {'face': '圭', 'size': H4, 'color': RED, 'back': 'KE'}
-NG = {'face': '全', 'size': H3, 'color': RED, 'back': 'GI'}
-UM = {'face': '馬', 'size': H2, 'color': RED, 'back': 'KA'}
-RY = {'face': '龍', 'size': H2, 'color': RED, 'back': 'HI'}
-
 CATALOG = {
-  'OU': OU,
-  'GY': GY,
-  'HI': HI,
-  'KA': KA,
-  'KI': KI,
-  'GI': GI,
-  'KE': KE,
-  'KY': KY,
-  'FU': FU,
-  'TO': TO,
-  'NY': NY,
-  'NK': NK,
-  'NG': NG,
-  'UM': UM,
-  'RY': RY
+  'OU': {
+    'face': '王',
+    'size': H1,
+    'color': BLACK,
+    'back': None
+  },
+  'GY': {
+    'face': '玉',
+    'size': H1,
+    'color': BLACK,
+    'back': None
+  },
+  'HI': {
+    'face': '飛',
+    'size': H2,
+    'color': BLACK,
+    'back': None
+  },
+  'KA': {
+    'face': '角',
+    'size': H2,
+    'color': BLACK,
+    'back': None
+  },
+  'KI': {
+    'face': '金',
+    'size': H3,
+    'color': BLACK,
+    'back': None
+  },
+  'GI': {
+    'face': '銀',
+    'size': H3,
+    'color': BLACK,
+    'back': None
+  },
+  'KE': {
+    'face': '桂',
+    'size': H4,
+    'color': BLACK,
+    'back': None
+  },
+  'KY': {
+    'face': '香',
+    'size': H5,
+    'color': BLACK,
+    'back': None
+  },
+  'FU': {
+    'face': '歩',
+    'size': H6,
+    'color': BLACK,
+    'back': None
+  },
+  'TO': {
+    'face': 'と',
+    'size': H6,
+    'color': RED,
+    'back': 'FU'
+  },
+  'NY': {
+    'face': '杏',
+    'size': H5,
+    'color': RED,
+    'back': 'KY'
+  },
+  'NK': {
+    'face': '圭',
+    'size': H4,
+    'color': RED,
+    'back': 'KE'
+  },
+  'NG': {
+    'face': '全',
+    'size': H3,
+    'color': RED,
+    'back': 'GI'
+  },
+  'UM': {
+    'face': '馬',
+    'size': H2,
+    'color': RED,
+    'back': 'KA'
+  },
+  'RY': {
+    'face': '龍',
+    'size': H2,
+    'color': RED,
+    'back': 'HI'
+  },
 }
 
 
@@ -185,7 +242,7 @@ class KifuReader:
     #print(CATALOG[teban_piece[1:]])
     _piece = CATALOG[teban_piece[1:]]['back']
     __piece = _piece if _piece else teban_piece[1:]
-    print(__piece)
+    #print(__piece)
 
     if 'TO' in teban_piece:
       piece = 'FU'
@@ -565,4 +622,3 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
-
