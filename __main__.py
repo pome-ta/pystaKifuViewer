@@ -38,12 +38,12 @@ KE = {'face': '桂', 'size': H4, 'color': BLACK, 'back': None}
 KY = {'face': '香', 'size': H5, 'color': BLACK, 'back': None}
 FU = {'face': '歩', 'size': H6, 'color': BLACK, 'back': None}
 
-TO = {'face': 'と', 'size': H6, 'color': RED, 'back': FU['face']}
-NY = {'face': '杏', 'size': H5, 'color': RED, 'back': KY['face']}
-NK = {'face': '圭', 'size': H4, 'color': RED, 'back': KE['face']}
-NG = {'face': '全', 'size': H3, 'color': RED, 'back': GI['face']}
-UM = {'face': '馬', 'size': H2, 'color': RED, 'back': KA['face']}
-RY = {'face': '龍', 'size': H2, 'color': RED, 'back': HI['face']}
+TO = {'face': 'と', 'size': H6, 'color': RED, 'back': 'FU'}
+NY = {'face': '杏', 'size': H5, 'color': RED, 'back': 'KY'}
+NK = {'face': '圭', 'size': H4, 'color': RED, 'back': 'KE'}
+NG = {'face': '全', 'size': H3, 'color': RED, 'back': 'GI'}
+UM = {'face': '馬', 'size': H2, 'color': RED, 'back': 'KA'}
+RY = {'face': '龍', 'size': H2, 'color': RED, 'back': 'HI'}
 
 CATALOG = {
   'OU': OU,
@@ -182,7 +182,11 @@ class KifuReader:
   @staticmethod
   def __convert_piece(teban_piece):
     # xxx: いつかは、class か何かに統合
-    print(CATALOG[teban_piece[1:]])
+    #print(CATALOG[teban_piece[1:]])
+    _piece = CATALOG[teban_piece[1:]]['back']
+    __piece = _piece if _piece else teban_piece[1:]
+    print(__piece)
+
     if 'TO' in teban_piece:
       piece = 'FU'
     elif 'NY' in teban_piece:
@@ -272,6 +276,7 @@ class Piece(ui.View):
     aspect_ratio = self.height_aspect
     top_radian = top_degree * (pi / 180)
     bottom_radian = bottom_degree * (pi / 180)
+    self.name_label.y = bottom_radian
     a = bottomline_length * (
       aspect_ratio * cos(bottom_radian) -
       (sin(bottom_radian) / 2)) / cos(bottom_radian + (top_radian / 2))
@@ -560,3 +565,4 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
+
