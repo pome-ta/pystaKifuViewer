@@ -166,16 +166,33 @@ class Cell(ui.View):
     self.add_subview(self.pos_x)
     self.add_subview(self.pos_y)
 
-  def set_label_pos(self, x, y):
+    self.koma = ui.Label()
+    self.koma.alignment = ui.ALIGN_CENTER
+    self.koma.font = ('Source Code Pro', 16)
+    #self.koma.bg_color = 'magenta'
+    self.koma.border_color = BLACK
+    self.koma.border_width = 1
+    self.add_subview(self.koma)
+
+  def setup_koma(self, _x, _y):
+    _w, _h = self.__set_label_pos(_x, _y)
+    w = self.width - (_w * 1.28)
+    h = self.height - (_h * 1.28)
+    self.koma.width, self.koma.height = [w, h]
+    self.koma.x = (self.width - self.koma.width) / 2
+    self.koma.y = (self.height - self.koma.height) / 2
+
+  def __set_label_pos(self, x, y):
     x_pos = self.width / 4
     y_pos = self.height / 4
     #self.pos_x.bg_color, self.pos_y.bg_color = ['cyan'] * 2
+    self.pos_x.text_color, self.pos_y.text_color = [BLACK] * 2
     self.pos_x.width, self.pos_y.width = [x_pos] * 2
     self.pos_x.height, self.pos_y.height = [y_pos] * 2
     self.pos_y.x = self.width - self.pos_y.width
     self.pos_y.y = self.height - self.pos_y.height
-
     self.pos_x.text, self.pos_y.text = index_to_dansuji(x, y)
+    return x_pos, y_pos
 
 
 class FieldMatrix(ui.View):
@@ -207,7 +224,7 @@ class FieldMatrix(ui.View):
         cell = self.cells[x][y]
         cell.width, cell.height = [w, h]
         cell.x, cell.y = [x_pos, y_pos]
-        cell.set_label_pos(x, y)
+        cell.setup_koma(x, y)
         x_pos += w
       x_pos = 0
       y_pos += h
@@ -385,4 +402,4 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
-  #root.present()
+ 
