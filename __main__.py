@@ -165,7 +165,7 @@ class KifuReader:
     self.gote_hand: list = []  # `-` 後手保持手駒
     self.after: str = ''
     self.piece_name: str = ''
-    self.debug = debug  # 1
+    self.debug = debug
 
     self.board_init, self.prompter = split_data(data)
     self.game_board = self.init_board()
@@ -262,10 +262,10 @@ class KifuReader:
 class Piece(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    #self.bg_color = 'red'
+    self.flex = 'WH'
+
     self.sent_rad = ui.Transform.rotation(0)
     self.gote_rad = ui.Transform.rotation(pi)
-    self.flex = 'WH'
 
     self.name_label = ui.Label()
     self.name_label.flex = 'WH'
@@ -318,6 +318,7 @@ class Piece(ui.View):
     aspect_ratio = self.height_aspect
     top_radian = top_degree * (pi / 180)
     bottom_radian = bottom_degree * (pi / 180)
+    # ガワのサイズ調整用
     self.name_label.y = bottom_radian
     a = bottomline_length * (
       aspect_ratio * cos(bottom_radian) -
@@ -384,9 +385,6 @@ class FieldMatrix(ui.View):
     self.bg_color = 'goldenrod'
     self.border_color = BLACK
     self.border_width = 1.5
-
-    self.sent_rad = ui.Transform.rotation(0)
-    self.gote_rad = ui.Transform.rotation(pi)
 
     self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
     [[self.add_subview(x) for x in y] for y in self.cells]
@@ -459,7 +457,7 @@ class HandCaption(ui.View):
     self.cap.alignment = ui.ALIGN_CENTER
     self.cap.text = ''
     self.cap.font = ('Source Code Pro', 10)
-    #self.cap.bg_color = 'blue'
+    self.cap.text_color = BLACK
     self.add_subview(self.cap)
 
   def layout(self):
@@ -506,14 +504,17 @@ class HandStand(ui.View):
   def on_hand(self, hold):
     self.reset_caps()
     if hold:
-      set_hold = set(hold)
+      set_hold = list(set(hold))
+      set_hold.sort()
       hold_num = [hold.count(pi) for pi in set_hold]
-      self.pieces = list(set_hold)
+      self.pieces = set_hold
       for n, p_str in enumerate(self.pieces):
         p_str = self.sente_gote + p_str
         piece = Piece()
-        piece.width = self.captions[n].width
-        piece.height = self.captions[n].height
+        piece.width = self.captions[n].width * 0.88
+        piece.height = self.captions[n].height * 0.88
+        piece.x = (self.captions[n].width - piece.width) / 2
+        piece.y = (self.captions[n].height - piece.height) / 2
         piece.make_up(p_str)
         piece.draw()
         self.captions[n].cap.text = str(hold_num[n])
@@ -521,7 +522,6 @@ class HandStand(ui.View):
 
   def reset_caps(self):
     for cap in self.captions:
-      cap.cap.text = ''
       cap.reset_cap()
 
 
@@ -532,7 +532,6 @@ class StageView(ui.View):
 
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    #self.bg_color = 'goldenrod'
     self.sente_stand = HandStand('+')
     self.gote_stand = HandStand('-')
     self.add_subview(self.sente_stand)
@@ -562,29 +561,17 @@ class StageView(ui.View):
     self.sente_stand.y = self.height - self.sente_stand.height
     self.sente_stand.x = self.width - self.sente_stand.width
 
-  def draw(self):
-    # xxx: サイズ確認用（Zのやつ）
-    ui.set_color(BLACK)
-    line = ui.Path()
-    line.line_width = 2
-    line.move_to(0, 0)
-    line.line_to(self.width, 0)
-    line.line_to(0, self.height)
-    line.line_to(self.width, self.height)
-    #line.stroke()
-
 
 class AreaView(ui.View):
   def __init__(self, parent, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     # xxx: Navigation Bar 操作用
     self.parent = parent
-    #self.bg_color = 'maroon'
     self.flex = 'WH'
     self.parts_color = 1  #'silver'
     self.parts_size = 64
     self.data = load_kifu()
-    # --- debug
+    # --- debug set
     self.game = KifuReader(self.data, debug=0)
     self.stage = StageView()
     self.init_setup()
@@ -684,7 +671,6 @@ class RootView(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     self.bg_color = 'slategray'
-    #self.bg_color = 'goldenrod'
     self.area = AreaView(self)
     self.add_subview(self.area)
 
