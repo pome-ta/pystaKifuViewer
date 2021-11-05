@@ -208,7 +208,6 @@ class KifuReader:
     after = instruction[3:5]
     piece = instruction[5:]
 
-    # xxx: if の反転したけど、直感に反する？
     if '00' in before:
       if '+' in teban:
         self.sente_hand.remove(piece)
@@ -228,18 +227,15 @@ class KifuReader:
 
   def __get_piece(self, teban_piece):
     piece = self.__convert_piece(teban_piece)
+    if '-' in teban_piece:
+      self.sente_hand.append(piece)
+      self.sente_hand.sort()
     if '+' in teban_piece:
       self.gote_hand.append(piece)
       self.gote_hand.sort()
 
-    if '-' in teban_piece:
-      self.sente_hand.append(piece)
-      self.sente_hand.sort()
-
   @staticmethod
   def __convert_piece(teban_piece):
-    # xxx: いつかは、class か何かに統合
-    #print(CATALOG[teban_piece[1:]])
     _piece = CATALOG[teban_piece[1:]]['back']
     piece = _piece if _piece else teban_piece[1:]
     return piece
@@ -266,8 +262,10 @@ class KifuReader:
 class Piece(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
+    #self.bg_color = 'red'
     self.sent_rad = ui.Transform.rotation(0)
     self.gote_rad = ui.Transform.rotation(pi)
+    self.flex = 'WH'
 
     self.name_label = ui.Label()
     self.name_label.flex = 'WH'
@@ -344,7 +342,6 @@ class Piece(ui.View):
 class Cell(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    #self.bg_color = 'magenta'
     self.pos_x = ui.Label()
     self.pos_y = ui.Label()
     self.pos_x.alignment = ui.ALIGN_CENTER
@@ -398,12 +395,6 @@ class FieldMatrix(ui.View):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
         cell.koma.make_up(koma)
-        '''
-        if '+' in koma:
-          cell.koma.transform = self.sent_rad
-        if '-' in koma:
-          cell.koma.transform = self.gote_rad
-        '''
         cell.koma.draw()
 
   def layout(self):
@@ -458,6 +449,32 @@ class FieldMatrix(ui.View):
       y_line += y_div
 
 
+class HandCaption(ui.View):
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.set_cap()
+
+  def set_cap(self):
+    self.cap = ui.Label()
+    self.cap.alignment = ui.ALIGN_CENTER
+    self.cap.text = ''
+    self.cap.font = ('Source Code Pro', 10)
+    #self.cap.bg_color = 'blue'
+    self.add_subview(self.cap)
+
+  def layout(self):
+    w = self.width / 4
+    h = self.height / 4
+    self.cap.width = w
+    self.cap.height = h
+    self.cap.x = self.width - self.cap.width
+
+  def reset_cap(self):
+    for view in self.subviews:
+      self.remove_subview(view)
+    self.set_cap()
+
+
 class HandStand(ui.View):
   """
   駒台
@@ -469,19 +486,43 @@ class HandStand(ui.View):
     self.sente_gote = sente_gote
     self.border_color = BLACK
     self.border_width = 1.5
-    self.Pieces = []
+    self.pieces = []
+    self.captions = [HandCaption() for i in range(8)]
+    [self.add_subview(cap) for cap in self.captions]
+
+  def layout(self):
+    w = self.width / 4
+    h = self.height / 2
+    x_pos = 0
+    y_pos = 0
+    for n, view in enumerate(self.captions):
+      view.width, view.height = [w, h]
+      view.x, view.y = [x_pos, y_pos]
+      x_pos += w
+      if n == 3:
+        x_pos = 0
+        y_pos += h
 
   def on_hand(self, hold):
-    self.Pieces = hold
-    if self.Pieces:
-      for p_str in self.Pieces:
-        if self.sente_gote:
-          p_str = '-' + p_str
-        else:
-          p_str = '+' + p_str
+    self.reset_caps()
+    if hold:
+      set_hold = set(hold)
+      hold_num = [hold.count(pi) for pi in set_hold]
+      self.pieces = list(set_hold)
+      for n, p_str in enumerate(self.pieces):
+        p_str = self.sente_gote + p_str
         piece = Piece()
+        piece.width = self.captions[n].width
+        piece.height = self.captions[n].height
         piece.make_up(p_str)
-        self.add_subview(piece)
+        piece.draw()
+        self.captions[n].cap.text = str(hold_num[n])
+        self.captions[n].add_subview(piece)
+
+  def reset_caps(self):
+    for cap in self.captions:
+      cap.cap.text = ''
+      cap.reset_cap()
 
 
 class StageView(ui.View):
@@ -492,8 +533,8 @@ class StageView(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     #self.bg_color = 'goldenrod'
-    self.sente_stand = HandStand(1)
-    self.gote_stand = HandStand(0)
+    self.sente_stand = HandStand('+')
+    self.gote_stand = HandStand('-')
     self.add_subview(self.sente_stand)
     self.add_subview(self.gote_stand)
     self.field = FieldMatrix()
@@ -518,8 +559,8 @@ class StageView(ui.View):
     self.sente_stand.height, self.gote_stand.height = [st_h] * 2
     self.sente_stand.width, self.gote_stand.width = [sq_size / 1.28] * 2
 
-    self.gote_stand.y = self.height - self.gote_stand.height
-    self.gote_stand.x = self.width - self.sente_stand.width
+    self.sente_stand.y = self.height - self.sente_stand.height
+    self.sente_stand.x = self.width - self.sente_stand.width
 
   def draw(self):
     # xxx: サイズ確認用（Zのやつ）
@@ -543,14 +584,17 @@ class AreaView(ui.View):
     self.parts_color = 1  #'silver'
     self.parts_size = 64
     self.data = load_kifu()
+    # --- debug
     self.game = KifuReader(self.data, debug=0)
     self.stage = StageView()
     self.init_setup()
 
   def update_game(self):
     self.game.looper(self.step)
-    self.stage.update_game(self.game.game_board, self.game.sente_hand,
-                           self.game.gote_hand)
+    now_board = self.game.game_board
+    sente_hand = self.game.sente_hand
+    gote_hand = self.game.gote_hand
+    self.stage.update_game(now_board, sente_hand, gote_hand)
 
   def layout(self):
     w = self.width
