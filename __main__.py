@@ -241,23 +241,7 @@ class KifuReader:
     # xxx: いつかは、class か何かに統合
     #print(CATALOG[teban_piece[1:]])
     _piece = CATALOG[teban_piece[1:]]['back']
-    __piece = _piece if _piece else teban_piece[1:]
-    #print(__piece)
-
-    if 'TO' in teban_piece:
-      piece = 'FU'
-    elif 'NY' in teban_piece:
-      piece = 'KY'
-    elif 'NK' in teban_piece:
-      piece = 'KE'
-    elif 'NG' in teban_piece:
-      piece = 'GI'
-    elif 'UM' in teban_piece:
-      piece = 'KA'
-    elif 'RY' in teban_piece:
-      piece = 'HI'
-    else:
-      piece = teban_piece[1:]
+    piece = _piece if _piece else teban_piece[1:]
     return piece
 
   def __print_board(self):
@@ -276,17 +260,15 @@ class KifuReader:
       out_txt += line + f'\t{kanji[n]}\n'
     out_txt += '+---------------------------+\n'
     out_txt += f'先手手駒: {self.sente_hand}\n'
-    #print(out_txt)
     return out_txt
 
 
 class Piece(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
-    #self.bg_color = 'magenta'
-    #self.flex = 'WH'
-    #self.border_color = BLACK
-    #self.border_width = 1
+    self.sent_rad = ui.Transform.rotation(0)
+    self.gote_rad = ui.Transform.rotation(pi)
+
     self.name_label = ui.Label()
     self.name_label.flex = 'WH'
     self.name_label.alignment = ui.ALIGN_CENTER
@@ -311,6 +293,11 @@ class Piece(ui.View):
     self.bottom_aspect = l / 29.3
     self.name_label.text = self.face
     self.name_label.text_color = piece['color']
+
+    if teban_piece[0] == '+':
+      self.transform = self.sent_rad
+    if teban_piece[0] == '-':
+      self.transform = self.gote_rad
 
   def draw(self):
     self.set_needs_display()
@@ -351,7 +338,6 @@ class Piece(ui.View):
     vector.line_to(-rx + (width / 2), ry + center)
     vector.line_to(-qx + (width / 2), qy + center)
 
-    #return [0, 0, qx,qy, rx, ry]
     return vector
 
 
@@ -381,7 +367,6 @@ class Cell(ui.View):
   def __set_label_pos(self, x, y):
     x_pos = self.width / 4
     y_pos = self.height / 4
-    #self.pos_x.bg_color, self.pos_y.bg_color = ['cyan'] * 2
     self.pos_x.alpha, self.pos_y.alpha = [0.5] * 2
     self.pos_x.text_color, self.pos_y.text_color = [BLACK] * 2
     self.pos_x.width, self.pos_y.width = [x_pos] * 2
@@ -413,12 +398,12 @@ class FieldMatrix(ui.View):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
         cell.koma.make_up(koma)
-
+        '''
         if '+' in koma:
           cell.koma.transform = self.sent_rad
         if '-' in koma:
           cell.koma.transform = self.gote_rad
-        #cell.koma.name_label.text = koma
+        '''
         cell.koma.draw()
 
   def layout(self):
@@ -473,6 +458,32 @@ class FieldMatrix(ui.View):
       y_line += y_div
 
 
+class HandStand(ui.View):
+  """
+  駒台
+  """
+
+  def __init__(self, sente_gote, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.bg_color = 'goldenrod'
+    self.sente_gote = sente_gote
+    self.border_color = BLACK
+    self.border_width = 1.5
+    self.Pieces = []
+
+  def on_hand(self, hold):
+    self.Pieces = hold
+    if self.Pieces:
+      for p_str in self.Pieces:
+        if self.sente_gote:
+          p_str = '-' + p_str
+        else:
+          p_str = '+' + p_str
+        piece = Piece()
+        piece.make_up(p_str)
+        self.add_subview(piece)
+
+
 class StageView(ui.View):
   """
   盤面と駒台
@@ -481,8 +492,17 @@ class StageView(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
     #self.bg_color = 'goldenrod'
+    self.sente_stand = HandStand(1)
+    self.gote_stand = HandStand(0)
+    self.add_subview(self.sente_stand)
+    self.add_subview(self.gote_stand)
     self.field = FieldMatrix()
     self.add_subview(self.field)
+
+  def update_game(self, game_board, sente_hand, gote_hand):
+    self.field.update_field(game_board)
+    self.sente_stand.on_hand(sente_hand)
+    self.gote_stand.on_hand(gote_hand)
 
   def layout(self):
     w = self.width
@@ -494,6 +514,13 @@ class StageView(ui.View):
     self.field.x = (w - self.field.width) / 2
     self.field.y = (h - self.field.height) / 2
 
+    st_h = ((self.height - self.field.height) / 2) * 0.88
+    self.sente_stand.height, self.gote_stand.height = [st_h] * 2
+    self.sente_stand.width, self.gote_stand.width = [sq_size / 1.28] * 2
+
+    self.gote_stand.y = self.height - self.gote_stand.height
+    self.gote_stand.x = self.width - self.sente_stand.width
+
   def draw(self):
     # xxx: サイズ確認用（Zのやつ）
     ui.set_color(BLACK)
@@ -503,7 +530,7 @@ class StageView(ui.View):
     line.line_to(self.width, 0)
     line.line_to(0, self.height)
     line.line_to(self.width, self.height)
-    line.stroke()
+    #line.stroke()
 
 
 class AreaView(ui.View):
@@ -522,8 +549,8 @@ class AreaView(ui.View):
 
   def update_game(self):
     self.game.looper(self.step)
-    # xxx: こんなに深く呼び出していいもの？
-    self.stage.field.update_field(self.game.game_board)
+    self.stage.update_game(self.game.game_board, self.game.sente_hand,
+                           self.game.gote_hand)
 
   def layout(self):
     w = self.width
