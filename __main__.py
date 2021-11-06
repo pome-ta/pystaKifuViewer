@@ -163,6 +163,7 @@ class KifuReader:
 
     self.sente_hand: list = []  # `+` 先手保持手駒
     self.gote_hand: list = []  # `-` 後手保持手駒
+    self.before: str = ''
     self.after: str = ''
     self.piece_name: str = ''
     self.debug = debug
@@ -375,78 +376,6 @@ class Cell(ui.View):
     return x_pos, y_pos
 
 
-class FieldMatrix(ui.View):
-  """
-  盤面そのもの
-  """
-
-  def __init__(self, *args, **kwargs):
-    ui.View.__init__(self, *args, **kwargs)
-    self.bg_color = 'goldenrod'
-    self.border_color = BLACK
-    self.border_width = 1.5
-
-    self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
-    [[self.add_subview(x) for x in y] for y in self.cells]
-
-  def update_field(self, board_Lists):
-    for cells, boards in zip(self.cells, board_Lists):
-      for cell, koma in zip(cells, boards):
-        cell.koma.make_up(koma)
-        cell.koma.draw()
-
-  def layout(self):
-    w = self.width
-    h = self.height
-    self.setup_cells(w, h)
-
-  def setup_cells(self, width, height):
-    w = width / MATRIX
-    h = height / MATRIX
-    x_pos = 0
-    y_pos = 0
-    # todo: 段=x 漢字, 筋=y 英数字
-    for dan in range(MATRIX):
-      for suji in range(MATRIX):
-        cell = self.cells[suji][dan]
-        cell.width, cell.height = [w, h]
-        cell.x, cell.y = [x_pos, y_pos]
-        cell.setup_koma(suji, dan)
-        y_pos += h
-      y_pos = 0
-      x_pos += w
-
-  def draw(self):
-    """
-    盤の線を引く、点を打つ
-    """
-    ui.set_color(BLACK)
-    x_line = 0
-    y_line = 0
-    d_size = 4
-    x_div = self.width / MATRIX
-    y_div = self.height / MATRIX
-    for m in range(MATRIX):
-      line_path = ui.Path()
-      # x
-      line_path.move_to(0, y_line)
-      line_path.line_to(self.width, y_line)
-      # y
-      line_path.move_to(x_line, 0)
-      line_path.line_to(x_line, self.height)
-      line_path.line_width = 1 if (m % 3 == 0) else 0.5
-      line_path.stroke()
-      # dot
-      if (m % 3 == 0) and (0 < m < MATRIX):
-        ux = x_line - (d_size / 2)
-        uy = y_line - (d_size / 2)
-        ui.Path.oval(ux, uy, d_size, d_size).fill()
-        bx = abs(ux - self.width + d_size)
-        ui.Path.oval(bx, uy, d_size, d_size).fill()
-      x_line += x_div
-      y_line += y_div
-
-
 class HandCaption(ui.View):
   def __init__(self, *args, **kwargs):
     ui.View.__init__(self, *args, **kwargs)
@@ -525,6 +454,84 @@ class HandStand(ui.View):
       cap.reset_cap()
 
 
+class FieldMatrix(ui.View):
+  """
+  盤面そのもの
+  """
+
+  def __init__(self, *args, **kwargs):
+    ui.View.__init__(self, *args, **kwargs)
+    self.bg_color = 'goldenrod'
+    self.border_color = BLACK
+    self.border_width = 1.5
+
+    self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
+    [[self.add_subview(x) for x in y] for y in self.cells]
+
+  def update_field(self, board_Lists):
+    for cells, boards in zip(self.cells, board_Lists):
+      for cell, koma in zip(cells, boards):
+        cell.koma.make_up(koma)
+        cell.koma.draw()
+
+  def before_animate_cell(self):
+    pass
+
+  def after_animate_cell(self):
+    pass
+
+  def layout(self):
+    w = self.width
+    h = self.height
+    self.setup_cells(w, h)
+
+  def setup_cells(self, width, height):
+    w = width / MATRIX
+    h = height / MATRIX
+    x_pos = 0
+    y_pos = 0
+    # todo: 段=x 漢字, 筋=y 英数字
+    for dan in range(MATRIX):
+      for suji in range(MATRIX):
+        cell = self.cells[suji][dan]
+        cell.width, cell.height = [w, h]
+        cell.x, cell.y = [x_pos, y_pos]
+        cell.setup_koma(suji, dan)
+        y_pos += h
+      y_pos = 0
+      x_pos += w
+
+  def draw(self):
+    """
+    盤の線を引く、点を打つ
+    """
+    ui.set_color(BLACK)
+    x_line = 0
+    y_line = 0
+    d_size = 4
+    x_div = self.width / MATRIX
+    y_div = self.height / MATRIX
+    for m in range(MATRIX):
+      line_path = ui.Path()
+      # x
+      line_path.move_to(0, y_line)
+      line_path.line_to(self.width, y_line)
+      # y
+      line_path.move_to(x_line, 0)
+      line_path.line_to(x_line, self.height)
+      line_path.line_width = 1 if (m % 3 == 0) else 0.5
+      line_path.stroke()
+      # dot
+      if (m % 3 == 0) and (0 < m < MATRIX):
+        ux = x_line - (d_size / 2)
+        uy = y_line - (d_size / 2)
+        ui.Path.oval(ux, uy, d_size, d_size).fill()
+        bx = abs(ux - self.width + d_size)
+        ui.Path.oval(bx, uy, d_size, d_size).fill()
+      x_line += x_div
+      y_line += y_div
+
+
 class StageView(ui.View):
   """
   盤面と駒台
@@ -582,6 +589,7 @@ class AreaView(ui.View):
     sente_hand = self.game.sente_hand
     gote_hand = self.game.gote_hand
     self.stage.update_game(now_board, sente_hand, gote_hand)
+    print(self.game.after)
 
   def layout(self):
     w = self.width
@@ -679,3 +687,4 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
+
