@@ -352,8 +352,12 @@ class Cell(ui.View):
     self.add_subview(self.pos_x)
     self.add_subview(self.pos_y)
 
+    self.piece_wrap = ui.View()
+    self.piece_wrap.flex = 'WH'
+    #self.piece_wrap.bg_color = 'red'
     self.koma = Piece()
-    self.add_subview(self.koma)
+    self.piece_wrap.add_subview(self.koma)
+    self.add_subview(self.piece_wrap)
 
   def setup_koma(self, _x, _y):
     _w, _h = self.__set_label_pos(_x, _y)
@@ -375,6 +379,7 @@ class Cell(ui.View):
     self.pos_x.text, self.pos_y.text = index_to_dansuji(x, y)
     return x_pos, y_pos
 
+
 class FieldMatrix(ui.View):
   """
   盤面そのもの
@@ -395,8 +400,20 @@ class FieldMatrix(ui.View):
         cell.koma.make_up(koma)
         cell.koma.draw()
 
-  def before_animate_cell(self):
-    pass
+  def before_animate_cell(self, teban):
+    if ('開始' in teban) or ('%' in teban):
+      return
+    x, y = sujidan_to_index(teban)
+    ani_koma = self.cells[x][y].piece_wrap
+    ani_koma.alpha = 0
+
+    def animation():
+      def in_ani():
+        ani_koma.alpha = 1
+
+      ui.animate(in_ani, duration=0.5)
+
+    ui.delay(animation, 0.15)
 
   def after_animate_cell(self):
     pass
@@ -451,7 +468,6 @@ class FieldMatrix(ui.View):
         ui.Path.oval(bx, uy, d_size, d_size).fill()
       x_line += x_div
       y_line += y_div
-
 
 
 class HandCaption(ui.View):
@@ -532,7 +548,6 @@ class HandStand(ui.View):
       cap.reset_cap()
 
 
-
 class StageView(ui.View):
   """
   盤面と駒台
@@ -590,7 +605,8 @@ class AreaView(ui.View):
     sente_hand = self.game.sente_hand
     gote_hand = self.game.gote_hand
     self.stage.update_game(now_board, sente_hand, gote_hand)
-    print(self.game.after)
+    #print(self.game.after)
+    self.stage.field.before_animate_cell(self.game.after)
 
   def layout(self):
     w = self.width
