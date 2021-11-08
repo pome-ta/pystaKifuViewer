@@ -580,11 +580,6 @@ class StageView(ui.View):
     self.field = FieldMatrix()
     self.add_subview(self.field)
 
-  def update_game(self, game_board, sente_hand, gote_hand):
-    self.field.update_field(game_board)
-    self.sente_stand.on_hand(sente_hand)
-    self.gote_stand.on_hand(gote_hand)
-
   def layout(self):
     w = self.width
     h = self.height
@@ -619,10 +614,10 @@ class AreaView(ui.View):
 
   def update_game(self):
     self.game.looper(self.step)
-    now_board = self.game.game_board
-    sente_hand = self.game.sente_hand
-    gote_hand = self.game.gote_hand
-    self.stage.update_game(now_board, sente_hand, gote_hand)
+
+    self.stage.field.update_field(self.game.game_board)
+    self.stage.sente_stand.on_hand(self.game.sente_hand)
+    self.stage.gote_stand.on_hand(self.game.gote_hand)
     self.stage.field.fade_in_before(self.game.before)
     self.stage.field.fade_in_after(self.game.after)
 
