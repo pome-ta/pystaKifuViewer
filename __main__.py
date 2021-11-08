@@ -177,6 +177,7 @@ class KifuReader:
     """
     self.sente_hand = []
     self.gote_hand = []
+    self.before = ''
     self.after = '開始'
     self.piece_name = ''
     setup_board = []
@@ -223,6 +224,7 @@ class KifuReader:
       self.__get_piece(self.game_board[af_x][af_y])
     self.game_board[af_x][af_y] = teban + piece
 
+    self.before = before
     self.after = after
     self.piece_name = teban + piece
 
@@ -352,6 +354,7 @@ class Cell(ui.View):
     self.add_subview(self.pos_x)
     self.add_subview(self.pos_y)
 
+    # Animation 用のView
     self.piece_wrap = ui.View()
     self.piece_wrap.flex = 'WH'
     #self.piece_wrap.bg_color = 'red'
@@ -394,29 +397,44 @@ class FieldMatrix(ui.View):
     self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
     [[self.add_subview(x) for x in y] for y in self.cells]
 
+  #@ui.in_background
   def update_field(self, board_Lists):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
+        cell.bg_color = None
+        cell.alpha = 1
         cell.koma.make_up(koma)
         cell.koma.draw()
 
-  def before_animate_cell(self, teban):
+  #@ui.in_background
+  def fade_in_after(self, teban):
     if ('開始' in teban) or ('%' in teban):
       return
     x, y = sujidan_to_index(teban)
+    ani_cell = self.cells[x][y]
     ani_koma = self.cells[x][y].piece_wrap
     ani_koma.alpha = 0
 
     def animation():
       def in_ani():
+        ani_cell.bg_color = 'khaki'
         ani_koma.alpha = 1
 
       ui.animate(in_ani, duration=0.5)
 
     ui.delay(animation, 0.15)
 
-  def after_animate_cell(self):
-    pass
+  def fade_in_before(self, teban):
+    if ('00' in teban) or ('' == teban):
+      return
+    x, y = sujidan_to_index(teban)
+    ani_cell = self.cells[x][y]
+
+    def animation():
+      ani_cell.bg_color = 'khaki'
+      ani_cell.alpha = 0.25
+
+    ui.animate(animation, duration=0.5)
 
   def layout(self):
     w = self.width
@@ -605,8 +623,8 @@ class AreaView(ui.View):
     sente_hand = self.game.sente_hand
     gote_hand = self.game.gote_hand
     self.stage.update_game(now_board, sente_hand, gote_hand)
-    #print(self.game.after)
-    self.stage.field.before_animate_cell(self.game.after)
+    self.stage.field.fade_in_before(self.game.before)
+    self.stage.field.fade_in_after(self.game.after)
 
   def layout(self):
     w = self.width
