@@ -6,6 +6,7 @@ BLACK = 0.24
 RED = 'red'
 
 MATRIX = 9
+TEBAN = {'+': '☖', '-': '☗'}
 
 NUMtoKAN = {
   1: '一',
@@ -397,7 +398,6 @@ class FieldMatrix(ui.View):
     self.cells = [[(Cell()) for x in range(MATRIX)] for y in range(MATRIX)]
     [[self.add_subview(x) for x in y] for y in self.cells]
 
-  #@ui.in_background
   def update_field(self, board_Lists):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
@@ -407,7 +407,7 @@ class FieldMatrix(ui.View):
         cell.koma.draw()
 
   #@ui.in_background
-  def fade_in_after(self, teban):
+  def btn_in_after(self, teban):
     if ('開始' in teban) or ('%' in teban):
       return
     x, y = sujidan_to_index(teban)
@@ -415,26 +415,46 @@ class FieldMatrix(ui.View):
     ani_koma = self.cells[x][y].piece_wrap
     ani_koma.alpha = 0
 
+    #@ui.in_background
     def animation():
+      ani_cell.bg_color = 'khaki'
+
       def in_ani():
-        ani_cell.bg_color = 'khaki'
+        #ani_cell.bg_color = 'khaki'
         ani_koma.alpha = 1
 
-      ui.animate(in_ani, duration=0.5)
+      ui.animate(in_ani, duration=0.25)
 
-    ui.delay(animation, 0.15)
+    ui.delay(animation, 1)
 
-  def fade_in_before(self, teban):
+  #@ui.in_background
+  def btn_in_before(self, teban):
     if ('00' in teban) or ('' == teban):
       return
     x, y = sujidan_to_index(teban)
     ani_cell = self.cells[x][y]
 
+    #@ui.in_background
     def animation():
       ani_cell.bg_color = 'khaki'
       ani_cell.alpha = 0.25
 
-    ui.animate(animation, duration=0.5)
+    ui.animate(animation, duration=0.25)
+
+  def sl_in_after(self, teban):
+    if ('開始' in teban) or ('%' in teban):
+      return
+    x, y = sujidan_to_index(teban)
+    cell = self.cells[x][y]
+    cell.bg_color = 'khaki'
+
+  def sl_in_before(self, teban):
+    if ('00' in teban) or ('' == teban):
+      return
+    x, y = sujidan_to_index(teban)
+    cell = self.cells[x][y]
+    cell.bg_color = 'khaki'
+    cell.alpha = 0.25
 
   def layout(self):
     w = self.width
@@ -558,7 +578,7 @@ class HandStand(ui.View):
         piece.y = (self.captions[n].height - piece.height) / 2
         piece.make_up(p_str)
         piece.draw()
-        self.captions[n].cap.text = str(hold_num[n])
+        self.captions[n].cap.text = str(hold_num[n]) if hold_num[n] > 1 else ''
         self.captions[n].add_subview(piece)
 
   def reset_caps(self):
@@ -618,8 +638,30 @@ class AreaView(ui.View):
     self.stage.field.update_field(self.game.game_board)
     self.stage.sente_stand.on_hand(self.game.sente_hand)
     self.stage.gote_stand.on_hand(self.game.gote_hand)
-    self.stage.field.fade_in_before(self.game.before)
-    self.stage.field.fade_in_after(self.game.after)
+    self.parent.name = self.print_prompt_nav()
+
+  def print_prompt_nav(self) -> str:
+    if '開始' in self.game.after:
+      return f'{self.game.after}'
+    if '%' in self.game.after:
+      return f'{self.step:03d}手目: 終局'
+
+    # xxx: 同{駒} はどうするか
+    suji_after, dan_after = index_to_dansuji(
+      *sujidan_to_index(self.game.after))
+    after = suji_after + dan_after
+
+    if '00' in self.game.before:
+      before = '打'
+    else:
+      suji_before, dan_before = index_to_dansuji(
+        *sujidan_to_index(self.game.before))
+      before = f'({suji_before}{dan_before})'
+
+    teban = TEBAN[self.game.piece_name[0]]
+    piece = CATALOG[self.game.piece_name[1:]]['face']
+
+    return f'{self.step:03d}手目: {teban}{after}{piece}{before}'
 
   def layout(self):
     w = self.width
@@ -677,6 +719,8 @@ class AreaView(ui.View):
   def steps_slider(self, sender):
     self.step = int(sender.value * self.max)
     self.update_game()
+    self.stage.field.sl_in_before(self.game.before)
+    self.stage.field.sl_in_after(self.game.after)
 
   def setup_btns(self):
     self.back_btn = self.set_btn('iob:ios7_arrow_left_32', 0)
@@ -703,6 +747,8 @@ class AreaView(ui.View):
         self.step -= 1
     self.sl.value = self.step_list[self.step]
     self.update_game()
+    self.stage.field.btn_in_before(self.game.before)
+    self.stage.field.btn_in_after(self.game.after)
 
 
 class RootView(ui.View):
