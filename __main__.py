@@ -290,15 +290,16 @@ class Piece(ui.View):
 
     h = piece['size']['center_height']
     l = piece['size']['bottom_width']
+    self.teban = teban_piece[0]
     self.face = piece['face']
     self.height_aspect = h / l
     self.bottom_aspect = l / 29.3
     self.name_label.text = self.face
     self.name_label.text_color = piece['color']
 
-    if teban_piece[0] == '+':
+    if self.teban == '+':
       self.transform = self.sent_rad
-    if teban_piece[0] == '-':
+    if self.teban == '-':
       self.transform = self.gote_rad
 
   def draw(self):
@@ -405,29 +406,35 @@ class FieldMatrix(ui.View):
         cell.alpha = 1
         cell.koma.make_up(koma)
         cell.koma.draw()
+        cell.koma.alpha = 1
 
   #@ui.in_background
   def btn_in_after(self, teban):
+    #ui.cancel_delays()
     if ('開始' in teban) or ('%' in teban):
       return
     x, y = sujidan_to_index(teban)
     ani_cell = self.cells[x][y]
     ani_koma = self.cells[x][y].piece_wrap
-    ani_koma.alpha = 0
+    ani_koma.alpha = 0.0
+    pre_y = ani_koma.y
+    interval = 8
+    ani_koma.y = pre_y + interval if ani_cell.koma.teban == '+' else -interval
 
-    #@ui.in_background
-    def animation():
+    def animation_cell():
       ani_cell.bg_color = 'khaki'
 
-      def in_ani():
-        #ani_cell.bg_color = 'khaki'
+    ui.animate(animation_cell, duration=0.75)
+
+    def animation_koma():
+      def animation():
         ani_koma.alpha = 1
+        ani_koma.y = pre_y
 
-      ui.animate(in_ani, duration=0.25)
+      ui.animate(animation, duration=0.25)
 
-    ui.delay(animation, 1)
+    ui.delay(animation_koma, 0.25)
 
-  #@ui.in_background
   def btn_in_before(self, teban):
     if ('00' in teban) or ('' == teban):
       return
@@ -439,7 +446,7 @@ class FieldMatrix(ui.View):
       ani_cell.bg_color = 'khaki'
       ani_cell.alpha = 0.25
 
-    ui.animate(animation, duration=0.25)
+    ui.animate(animation, duration=0.5)
 
   def sl_in_after(self, teban):
     if ('開始' in teban) or ('%' in teban):
@@ -763,4 +770,3 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
-
