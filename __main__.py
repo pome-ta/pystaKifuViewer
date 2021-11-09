@@ -664,8 +664,7 @@ class AreaView(ui.View):
     return f'{self.step:03d}手目: {teban}{after}{piece}{before}'
 
   def layout(self):
-    w = self.width
-    h = self.height
+    w, h = [self.width, self.height]
     square_size = min(w, h)
     margin_size = square_size * 0.064
     # btm set
@@ -765,4 +764,3 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
-
