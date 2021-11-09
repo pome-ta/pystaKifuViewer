@@ -402,15 +402,17 @@ class FieldMatrix(ui.View):
   def update_field(self, board_Lists):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
+        #print(cell.)
         cell.bg_color = None
         cell.alpha = 1
         cell.koma.make_up(koma)
         cell.koma.draw()
-        cell.koma.alpha = 1
+        cell.piece_wrap.alpha = 1
+        cell.piece_wrap.y = 0
 
   #@ui.in_background
   def btn_in_after(self, teban):
-    #ui.cancel_delays()
+    ui.cancel_delays()
     if ('開始' in teban) or ('%' in teban):
       return
     x, y = sujidan_to_index(teban)
@@ -441,12 +443,11 @@ class FieldMatrix(ui.View):
     x, y = sujidan_to_index(teban)
     ani_cell = self.cells[x][y]
 
-    #@ui.in_background
-    def animation():
+    def animation_cell():
       ani_cell.bg_color = 'khaki'
       ani_cell.alpha = 0.25
 
-    ui.animate(animation, duration=0.5)
+    ui.animate(animation_cell, duration=0.5)
 
   def sl_in_after(self, teban):
     if ('開始' in teban) or ('%' in teban):
