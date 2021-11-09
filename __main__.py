@@ -359,7 +359,6 @@ class Cell(ui.View):
     # Animation 用のView
     self.piece_wrap = ui.View()
     self.piece_wrap.flex = 'WH'
-    #self.piece_wrap.bg_color = 'red'
     self.koma = Piece()
     self.piece_wrap.add_subview(self.koma)
     self.add_subview(self.piece_wrap)
@@ -402,7 +401,6 @@ class FieldMatrix(ui.View):
   def update_field(self, board_Lists):
     for cells, boards in zip(self.cells, board_Lists):
       for cell, koma in zip(cells, boards):
-        #print(cell.)
         cell.bg_color = None
         cell.alpha = 1
         cell.koma.make_up(koma)
@@ -410,7 +408,6 @@ class FieldMatrix(ui.View):
         cell.piece_wrap.alpha = 1
         cell.piece_wrap.y = 0
 
-  #@ui.in_background
   def btn_in_after(self, teban):
     ui.cancel_delays()
     if ('開始' in teban) or ('%' in teban):
@@ -423,19 +420,19 @@ class FieldMatrix(ui.View):
     interval = 8
     ani_koma.y = pre_y + interval if ani_cell.koma.teban == '+' else -interval
 
+    def animation_koma_move():
+      ani_koma.alpha = 0.0
+      ani_koma.y = pre_y
+
     def animation_cell():
-      ani_cell.bg_color = 'khaki'
-
-    ui.animate(animation_cell, duration=0.75)
-
-    def animation_koma():
-      def animation():
+      def in_animation():
+        ani_cell.bg_color = 'khaki'
         ani_koma.alpha = 1
-        ani_koma.y = pre_y
 
-      ui.animate(animation, duration=0.25)
+      ui.animate(in_animation, duration=0.5)
 
-    ui.delay(animation_koma, 0.25)
+    ui.animate(animation_koma_move, duration=0.25)
+    ui.delay(animation_cell, 0.125)
 
   def btn_in_before(self, teban):
     if ('00' in teban) or ('' == teban):
@@ -472,8 +469,7 @@ class FieldMatrix(ui.View):
   def setup_cells(self, width, height):
     w = width / MATRIX
     h = height / MATRIX
-    x_pos = 0
-    y_pos = 0
+    x_pos, y_pos = [0, 0]
     # todo: 段=x 漢字, 筋=y 英数字
     for dan in range(MATRIX):
       for suji in range(MATRIX):
@@ -490,8 +486,7 @@ class FieldMatrix(ui.View):
     盤の線を引く、点を打つ
     """
     ui.set_color(BLACK)
-    x_line = 0
-    y_line = 0
+    x_line, y_line = [0, 0]
     d_size = 4
     x_div = self.width / MATRIX
     y_div = self.height / MATRIX
@@ -530,10 +525,7 @@ class HandCaption(ui.View):
     self.add_subview(self.cap)
 
   def layout(self):
-    w = self.width / 4
-    h = self.height / 4
-    self.cap.width = w
-    self.cap.height = h
+    self.cap.width, self.cap.height = [self.width / 4, self.height / 4]
     self.cap.x = self.width - self.cap.width
 
   def reset_cap(self):
@@ -748,9 +740,11 @@ class AreaView(ui.View):
 
   def steps_btn(self, sender):
     if sender.back_forward:
+      # forward
       if self.step < self.max:
         self.step += 1
     else:
+      # back
       if self.step > 0:
         self.step -= 1
     self.sl.value = self.step_list[self.step]
@@ -771,3 +765,4 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
+
