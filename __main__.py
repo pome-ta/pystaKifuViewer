@@ -627,7 +627,7 @@ class AreaView(ui.View):
     self.parts_color = 1  #'silver'
     self.parts_size = 64
 
-    self.update_interval = 1
+    self.update_interval = 0
 
     self.data = load_kifu()
     # --- debug set
@@ -674,7 +674,7 @@ class AreaView(ui.View):
     square_size = min(w, h)
     margin_size = square_size * 0.064
     # btm set
-    self.btm.height = self.parent.frame[1] * 1.024
+    self.btm.height = self.parent.frame[1] * 1.5  #1.024
     self.btm.width = w
     self.btm.x = (w - self.btm.width) / 2
     self.btm.y = h - self.btm.height
@@ -684,6 +684,16 @@ class AreaView(ui.View):
     # Buttons
     self.back_btn.x = 0
     self.forward_btn.x = w - self.parts_size
+
+    self.play_pause_btn.x = (w - self.play_pause_btn.width) / 2
+    self.play_pause_btn.y = self.sl.height / 1.5
+
+    self.start_btn.x = self.play_pause_btn.x - self.start_btn.width
+    self.start_btn.y = self.play_pause_btn.y
+
+    self.end_btn.x = self.play_pause_btn.x + self.end_btn.width
+    self.end_btn.y = self.play_pause_btn.y
+
     # stage
     self.stage.width = w - (margin_size / 2)
     self.stage.height = h - self.btm.height - (margin_size / 2)
@@ -702,6 +712,10 @@ class AreaView(ui.View):
     self.btm.add_subview(self.sl)
     self.btm.add_subview(self.back_btn)
     self.btm.add_subview(self.forward_btn)
+    self.btm.add_subview(self.play_pause_btn)
+    self.btm.add_subview(self.start_btn)
+    self.btm.add_subview(self.end_btn)
+
     self.add_subview(self.btm)
     self.add_subview(self.stage)
     self.update_game()
@@ -729,22 +743,40 @@ class AreaView(ui.View):
 
   def setup_btns(self):
     self.back_btn = self.set_btn('iob:ios7_arrow_left_32', 0)
+    self.back_btn.action = self.steps_btn
     self.forward_btn = self.set_btn('iob:ios7_arrow_right_32', 1)
+    self.forward_btn.action = self.steps_btn
 
-  def set_btn(self, img, back_forward):
-    # forward: 1, back: 0
+    self.play_pause_btn = self.set_btn('iob:ios7_play_32', 0)
+    self.play_pause_btn.action = self.change_play_pause
+    self.end_btn = self.set_btn('iob:ios7_skipforward_32', 1)
+    self.start_btn = self.set_btn('iob:ios7_skipbackward_32', 0)
+
+  def set_btn(self, img, boolean):
+    # forward: 1, back : 0
+    # play   : 1, pause: 0
+    # end    : 1, start: 0
     icon = ui.Image.named(img)
     btn = ui.Button(title='')
-    btn.back_forward = back_forward
+    btn.boolean = boolean
     btn.width = self.parts_size
     btn.height = self.parts_size
     btn.bg_color = self.parts_color
     btn.image = icon
-    btn.action = self.steps_btn
     return btn
 
+  def change_play_pause(self, sender):
+    if sender.boolean:
+      sender.image = ui.Image.named('iob:ios7_play_32')
+      sender.boolean = 0
+      self.update_interval = sender.boolean
+    else:
+      sender.image = ui.Image.named('iob:ios7_pause_32')
+      sender.boolean = 1
+      self.update_interval = sender.boolean
+
   def steps_btn(self, sender):
-    if sender.back_forward:
+    if sender.boolean:
       # forward
       if self.step < self.max:
         self.step += 1
@@ -770,4 +802,3 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
-
