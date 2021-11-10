@@ -603,7 +603,7 @@ class StageView(ui.View):
   def layout(self):
     w = self.width
     h = self.height
-    sq_size = min(w, h)
+    sq_size = min(w, h) / 1.024
     self.field.width = sq_size
     # https://sizea.jp/shogi-size/
     self.field.height = sq_size * (34.8 / 31.7)
@@ -736,12 +736,6 @@ class AreaView(ui.View):
     self.sl.action = self.steps_slider
     self.sl.continuous = False
 
-  def steps_slider(self, sender):
-    self.step = int(sender.value * self.max)
-    self.update_game()
-    self.stage.field.sl_in_before(self.game.before)
-    self.stage.field.sl_in_after(self.game.after)
-
   def setup_btns(self):
     self.back_btn = self.set_btn('iob:ios7_arrow_left_32', 0)
     self.back_btn.action = self.steps_btn
@@ -751,7 +745,9 @@ class AreaView(ui.View):
     self.play_pause_btn = self.set_btn('iob:ios7_play_32', 0)
     self.play_pause_btn.action = self.change_play_pause
     self.end_btn = self.set_btn('iob:ios7_skipforward_32', 1)
+    self.end_btn.action = self.jump_btn
     self.start_btn = self.set_btn('iob:ios7_skipbackward_32', 0)
+    self.start_btn.action = self.jump_btn
 
   def set_btn(self, img, boolean):
     # forward: 1, back : 0
@@ -778,6 +774,16 @@ class AreaView(ui.View):
       self.update_interval = sender.boolean
       self.bg_color = 'seagreen'
 
+  def jump_btn(self, sender):
+    if sender.boolean:
+      # end
+      self.sl.value = 1
+      self.steps_slider(self.sl)
+    else:
+      # start
+      self.sl.value = 0
+      self.steps_slider(self.sl)
+
   def steps_btn(self, sender):
     if sender.boolean:
       # forward
@@ -791,6 +797,12 @@ class AreaView(ui.View):
     self.update_game()
     self.stage.field.btn_in_before(self.game.before)
     self.stage.field.btn_in_after(self.game.after)
+
+  def steps_slider(self, sender):
+    self.step = int(sender.value * self.max)
+    self.update_game()
+    self.stage.field.sl_in_before(self.game.before)
+    self.stage.field.sl_in_after(self.game.after)
 
 
 class RootView(ui.View):
