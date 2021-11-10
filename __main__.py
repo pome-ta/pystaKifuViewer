@@ -626,11 +626,17 @@ class AreaView(ui.View):
     self.flex = 'WH'
     self.parts_color = 1  #'silver'
     self.parts_size = 64
+
+    self.update_interval = 1
+
     self.data = load_kifu()
     # --- debug set
     self.game = KifuReader(self.data, debug=0)
     self.stage = StageView()
     self.init_setup()
+
+  def update(self):
+    self.steps_btn(self.forward_btn)
 
   def update_game(self):
     self.game.looper(self.step)
@@ -764,3 +770,4 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
+
