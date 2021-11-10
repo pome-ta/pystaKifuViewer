@@ -623,6 +623,7 @@ class AreaView(ui.View):
     ui.View.__init__(self, *args, **kwargs)
     # xxx: Navigation Bar 操作用
     self.parent = parent
+    self.bg_color = 'slategray'
     self.flex = 'WH'
     self.parts_color = 1  #'silver'
     self.parts_size = 64
@@ -770,10 +771,12 @@ class AreaView(ui.View):
       sender.image = ui.Image.named('iob:ios7_play_32')
       sender.boolean = 0
       self.update_interval = sender.boolean
+      self.bg_color = 'slategray'
     else:
       sender.image = ui.Image.named('iob:ios7_pause_32')
       sender.boolean = 1
       self.update_interval = sender.boolean
+      self.bg_color = 'seagreen'
 
   def steps_btn(self, sender):
     if sender.boolean:
