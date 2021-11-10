@@ -709,12 +709,12 @@ class AreaView(ui.View):
     self.setup_slider()
     self.setup_btns()
 
-    self.btm.add_subview(self.sl)
-    self.btm.add_subview(self.back_btn)
-    self.btm.add_subview(self.forward_btn)
     self.btm.add_subview(self.play_pause_btn)
     self.btm.add_subview(self.start_btn)
     self.btm.add_subview(self.end_btn)
+    self.btm.add_subview(self.sl)
+    self.btm.add_subview(self.back_btn)
+    self.btm.add_subview(self.forward_btn)
 
     self.add_subview(self.btm)
     self.add_subview(self.stage)
@@ -802,3 +802,4 @@ if __name__ == '__main__':
   # xxx: `path`
   root = RootView()
   root.present(style='fullscreen', orientations=['portrait'])
+
