@@ -135,10 +135,11 @@ def split_data(data):
   BOARD = 17
   PROMPT = data[BOARD:] if '%' in data[-1] else data[BOARD:-1]
 
-  head = data[:HEAD]
+  header = data[:HEAD]
   board = data[HEAD:BOARD]
   prompt = [i.strip() for i in PROMPT]
-  return board, prompt
+
+  return header, board, prompt
 
 
 # todo: 段=x 漢字, 筋=y 英数字
@@ -169,7 +170,7 @@ class KifuReader:
     self.piece_name: str = ''
     self.debug = debug
 
-    self.board_init, self.prompter = split_data(data)
+    self.header, self.board_init, self.prompter = split_data(data)
     self.game_board = self.init_board()
 
   def init_board(self):
@@ -738,16 +739,16 @@ class AreaView(ui.View):
 
   def setup_btns(self):
     self.back_btn = self.set_btn('iob:ios7_arrow_left_32', 0)
-    self.back_btn.action = self.steps_btn
     self.forward_btn = self.set_btn('iob:ios7_arrow_right_32', 1)
-    self.forward_btn.action = self.steps_btn
-
     self.play_pause_btn = self.set_btn('iob:ios7_play_32', 0)
-    self.play_pause_btn.action = self.change_play_pause
-    self.end_btn = self.set_btn('iob:ios7_skipforward_32', 1)
-    self.end_btn.action = self.jump_btn
     self.start_btn = self.set_btn('iob:ios7_skipbackward_32', 0)
+    self.end_btn = self.set_btn('iob:ios7_skipforward_32', 1)
+
+    self.back_btn.action = self.steps_btn
+    self.forward_btn.action = self.steps_btn
+    self.play_pause_btn.action = self.change_play_pause
     self.start_btn.action = self.jump_btn
+    self.end_btn.action = self.jump_btn
 
   def set_btn(self, img, boolean):
     # forward: 1, back : 0
